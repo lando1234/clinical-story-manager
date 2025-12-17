@@ -32,6 +32,8 @@ export interface PatientSearchInput {
   name?: string;
   /** Search by patient ID (exact match) */
   id?: string;
+  /** Search by date of birth (exact match) */
+  dateOfBirth?: Date;
 }
 
 /**

@@ -35,9 +35,15 @@ export const PatientRepository = {
   },
 
   /**
-   * Search patients by name or ID.
+   * Search patients by name, ID, or date of birth.
    * - Name search uses case-insensitive contains (substring match)
    * - ID search uses exact match
+   * - Date of birth search uses exact match
+   * 
+   * Sorting (per specs):
+   * 1. Status (Active before Inactive)
+   * 2. Full name (alphabetical, case-insensitive)
+   * 3. Registration date (most recently registered first)
    */
   async search(criteria: PatientSearchInput): Promise<Patient[]> {
     const where: Prisma.PatientWhereInput = {};
@@ -53,20 +59,37 @@ export const PatientRepository = {
       };
     }
 
+    if (criteria.dateOfBirth) {
+      where.dateOfBirth = criteria.dateOfBirth;
+    }
+
     return prisma.patient.findMany({
       where,
-      orderBy: { fullName: 'asc' },
+      orderBy: [
+        { status: 'asc' }, // Active comes before Inactive in enum order
+        { fullName: 'asc' },
+        { registrationDate: 'desc' }, // Most recent first
+      ],
     });
   },
 
   /**
    * List all patients (with optional pagination).
+   * 
+   * Sorting (per specs):
+   * 1. Status (Active before Inactive)
+   * 2. Full name (alphabetical, case-insensitive)
+   * 3. Registration date (most recently registered first)
    */
   async findAll(options?: { take?: number; skip?: number }): Promise<Patient[]> {
     return prisma.patient.findMany({
       take: options?.take,
       skip: options?.skip,
-      orderBy: { fullName: 'asc' },
+      orderBy: [
+        { status: 'asc' }, // Active comes before Inactive in enum order
+        { fullName: 'asc' },
+        { registrationDate: 'desc' }, // Most recent first
+      ],
     });
   },
 

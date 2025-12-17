@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/patients
- * Search patients by name or id, or list all patients.
+ * Search patients by name, id, or date of birth, or list all patients.
  * 
  * Query parameters:
- * - name: Search by patient name (partial match)
+ * - name: Search by patient name (partial match, case-insensitive)
  * - id: Search by patient ID (exact match)
+ * - dateOfBirth: Search by date of birth (exact match, ISO date string)
  * - If no parameters provided, returns all patients
  */
 export async function GET(request: NextRequest) {
@@ -58,12 +59,23 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const name = searchParams.get('name');
     const id = searchParams.get('id');
+    const dateOfBirthParam = searchParams.get('dateOfBirth');
+
+    // Parse date of birth if provided
+    let dateOfBirth: Date | undefined;
+    if (dateOfBirthParam) {
+      const parsedDate = new Date(dateOfBirthParam);
+      if (!isNaN(parsedDate.getTime())) {
+        dateOfBirth = parsedDate;
+      }
+    }
 
     // If search criteria provided, search
-    if (name || id) {
+    if (name || id || dateOfBirth) {
       const patients = await PatientService.searchPatients({
         name: name || undefined,
         id: id || undefined,
+        dateOfBirth: dateOfBirth,
       });
       return NextResponse.json(patients);
     }

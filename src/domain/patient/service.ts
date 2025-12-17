@@ -1,4 +1,5 @@
 import { PatientRepository } from '../../data/patient/repository';
+import { prisma } from '../../lib/prisma';
 import type {
   CreatePatientInput,
   PatientOutput,
@@ -51,6 +52,23 @@ function toPatientOutput(patient: Patient): PatientOutput {
 }
 
 /**
+ * Validate email format.
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validate phone format (basic validation - allows digits, spaces, dashes, parentheses, plus).
+ */
+function isValidPhone(phone: string): boolean {
+  // Remove common formatting characters and check if remaining are digits
+  const cleaned = phone.replace(/[\s\-\(\)\+]/g, '');
+  return /^\d+$/.test(cleaned) && cleaned.length >= 7 && cleaned.length <= 15;
+}
+
+/**
  * Validate input for creating a patient.
  */
 function validateCreateInput(input: CreatePatientInput): ValidationResult {
@@ -72,6 +90,34 @@ function validateCreateInput(input: CreatePatientInput): ValidationResult {
   
   if (dob > today) {
     return { success: false, error: 'Date of birth cannot be in the future' };
+  }
+
+  // Contact email validation
+  if (input.contactEmail !== undefined && input.contactEmail !== null && input.contactEmail.trim().length > 0) {
+    if (!isValidEmail(input.contactEmail)) {
+      return { success: false, error: 'Invalid email format' };
+    }
+  }
+
+  // Contact phone validation
+  if (input.contactPhone !== undefined && input.contactPhone !== null && input.contactPhone.trim().length > 0) {
+    if (!isValidPhone(input.contactPhone)) {
+      return { success: false, error: 'Invalid phone format' };
+    }
+  }
+
+  // Emergency contact validation: if name is provided, phone is required
+  if (input.emergencyContactName !== undefined && input.emergencyContactName !== null && input.emergencyContactName.trim().length > 0) {
+    if (!input.emergencyContactPhone || input.emergencyContactPhone.trim().length === 0) {
+      return { success: false, error: 'Emergency contact phone is required when emergency contact name is provided' };
+    }
+  }
+
+  // Emergency contact phone validation
+  if (input.emergencyContactPhone !== undefined && input.emergencyContactPhone !== null && input.emergencyContactPhone.trim().length > 0) {
+    if (!isValidPhone(input.emergencyContactPhone)) {
+      return { success: false, error: 'Invalid phone format' };
+    }
   }
 
   return { success: true };
@@ -103,6 +149,34 @@ function validateUpdateInput(input: UpdatePatientInput): ValidationResult {
     }
   }
 
+  // Contact email validation
+  if (input.contactEmail !== undefined && input.contactEmail !== null && input.contactEmail.trim().length > 0) {
+    if (!isValidEmail(input.contactEmail)) {
+      return { success: false, error: 'Invalid email format' };
+    }
+  }
+
+  // Contact phone validation
+  if (input.contactPhone !== undefined && input.contactPhone !== null && input.contactPhone.trim().length > 0) {
+    if (!isValidPhone(input.contactPhone)) {
+      return { success: false, error: 'Invalid phone format' };
+    }
+  }
+
+  // Emergency contact validation: if name is provided, phone is required
+  if (input.emergencyContactName !== undefined && input.emergencyContactName !== null && input.emergencyContactName.trim().length > 0) {
+    if (!input.emergencyContactPhone || input.emergencyContactPhone.trim().length === 0) {
+      return { success: false, error: 'Emergency contact phone is required when emergency contact name is provided' };
+    }
+  }
+
+  // Emergency contact phone validation
+  if (input.emergencyContactPhone !== undefined && input.emergencyContactPhone !== null && input.emergencyContactPhone.trim().length > 0) {
+    if (!isValidPhone(input.emergencyContactPhone)) {
+      return { success: false, error: 'Invalid phone format' };
+    }
+  }
+
   return { success: true };
 }
 
@@ -114,6 +188,7 @@ export const PatientService = {
   /**
    * Create a new patient.
    * Validates required fields before creation.
+   * Automatically creates ClinicalRecord and initial PsychiatricHistory (version 1).
    * 
    * @throws {PatientValidationError} If validation fails
    */
@@ -123,12 +198,55 @@ export const PatientService = {
       throw new PatientValidationError(validation.error);
     }
 
-    const patient = await PatientRepository.create({
-      ...input,
-      fullName: input.fullName.trim(),
+    // Create patient, ClinicalRecord, and initial PsychiatricHistory in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create patient
+      const patient = await tx.patient.create({
+        data: {
+          fullName: input.fullName.trim(),
+          dateOfBirth: input.dateOfBirth,
+          contactPhone: input.contactPhone?.trim() || null,
+          contactEmail: input.contactEmail?.trim() || null,
+          address: input.address?.trim() || null,
+          emergencyContactName: input.emergencyContactName?.trim() || null,
+          emergencyContactPhone: input.emergencyContactPhone?.trim() || null,
+          emergencyContactRelationship: input.emergencyContactRelationship?.trim() || null,
+          status: 'Active',
+        },
+      });
+
+      // Create ClinicalRecord (1:1 relationship)
+      const clinicalRecord = await tx.clinicalRecord.create({
+        data: {
+          patientId: patient.id,
+        },
+      });
+
+      // Create initial PsychiatricHistory (version 1) with all fields empty
+      await tx.psychiatricHistory.create({
+        data: {
+          clinicalRecordId: clinicalRecord.id,
+          versionNumber: 1,
+          chiefComplaint: null,
+          historyOfPresentIllness: null,
+          pastPsychiatricHistory: null,
+          pastHospitalizations: null,
+          suicideAttemptHistory: null,
+          substanceUseHistory: null,
+          familyPsychiatricHistory: null,
+          medicalHistory: null,
+          surgicalHistory: null,
+          allergies: null,
+          socialHistory: null,
+          developmentalHistory: null,
+          isCurrent: true,
+        },
+      });
+
+      return patient;
     });
 
-    return toPatientOutput(patient);
+    return toPatientOutput(result);
   },
 
   /**
@@ -147,12 +265,12 @@ export const PatientService = {
   },
 
   /**
-   * Search patients by name or ID.
+   * Search patients by name, ID, or date of birth.
    * Returns empty array if no criteria provided or no matches found.
    */
   async searchPatients(criteria: PatientSearchInput): Promise<PatientOutput[]> {
     // If no search criteria provided, return empty array
-    if (!criteria.name && !criteria.id) {
+    if (!criteria.name && !criteria.id && !criteria.dateOfBirth) {
       return [];
     }
 
@@ -171,6 +289,7 @@ export const PatientService = {
   /**
    * Update a patient by their unique ID.
    * Validates input before updating.
+   * Protects immutable fields (id, registrationDate, createdAt, updatedAt).
    * 
    * @throws {PatientValidationError} If validation fails
    * @throws {PatientNotFoundError} If patient does not exist
@@ -188,7 +307,8 @@ export const PatientService = {
       throw new PatientValidationError(validation.error);
     }
 
-    // Prepare update data
+    // Prepare update data - only mutable fields allowed
+    // Immutable fields: id, registrationDate, createdAt, updatedAt (auto-managed)
     const updateData: Parameters<typeof PatientRepository.update>[1] = {};
 
     if (input.fullName !== undefined) {
@@ -198,22 +318,22 @@ export const PatientService = {
       updateData.dateOfBirth = input.dateOfBirth;
     }
     if (input.contactPhone !== undefined) {
-      updateData.contactPhone = input.contactPhone;
+      updateData.contactPhone = input.contactPhone?.trim() || null;
     }
     if (input.contactEmail !== undefined) {
-      updateData.contactEmail = input.contactEmail;
+      updateData.contactEmail = input.contactEmail?.trim() || null;
     }
     if (input.address !== undefined) {
-      updateData.address = input.address;
+      updateData.address = input.address?.trim() || null;
     }
     if (input.emergencyContactName !== undefined) {
-      updateData.emergencyContactName = input.emergencyContactName;
+      updateData.emergencyContactName = input.emergencyContactName?.trim() || null;
     }
     if (input.emergencyContactPhone !== undefined) {
-      updateData.emergencyContactPhone = input.emergencyContactPhone;
+      updateData.emergencyContactPhone = input.emergencyContactPhone?.trim() || null;
     }
     if (input.emergencyContactRelationship !== undefined) {
-      updateData.emergencyContactRelationship = input.emergencyContactRelationship;
+      updateData.emergencyContactRelationship = input.emergencyContactRelationship?.trim() || null;
     }
     if (input.status !== undefined) {
       updateData.status = input.status;
