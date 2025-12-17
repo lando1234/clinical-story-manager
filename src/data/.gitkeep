@@ -1,0 +1,14 @@
+# Data Access Layer
+
+This directory will contain data access logic and repositories.
+
+## Future Structure (TODO)
+
+- `repositories/` - Data access patterns for each entity
+- `prisma.ts` - Prisma client singleton
+
+## Constraints
+
+- All database interactions go through this layer
+- Repositories return domain entities, not raw database records
+- No business logic in this layer

@@ -1,0 +1,15 @@
+# Domain Layer
+
+This directory will contain domain entities and business logic.
+
+## Future Structure (TODO)
+
+- `entities/` - Domain entity definitions
+- `services/` - Business logic and domain services
+- `validation/` - Domain validation rules
+
+## Constraints
+
+- No database dependencies in this layer
+- No UI dependencies in this layer
+- Pure business logic only

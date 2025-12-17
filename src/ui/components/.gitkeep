@@ -1,0 +1,14 @@
+# UI Components
+
+This directory will contain reusable React components.
+
+## Future Structure (TODO)
+
+- Organized by feature or component type
+- Follows atomic design principles where appropriate
+
+## Constraints
+
+- Components should be presentational where possible
+- Use Tailwind CSS for styling
+- No direct database access from components

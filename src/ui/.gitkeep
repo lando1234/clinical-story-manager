@@ -1,0 +1,13 @@
+# UI Layer
+
+This directory contains the presentation layer.
+
+## Structure
+
+- `components/` - Reusable React components
+
+## Constraints
+
+- Use Tailwind CSS for styling
+- Components should be presentational where possible
+- No direct database access from UI layer

@@ -1,0 +1,15 @@
+# TypeScript Types
+
+This directory will contain shared TypeScript type definitions.
+
+## Future Structure (TODO)
+
+- `api.ts` - API request/response types
+- `domain.ts` - Domain entity types
+- `ui.ts` - UI-specific types
+
+## Constraints
+
+- Types should be colocated with their usage when possible
+- Shared types go here
+- Follow strict TypeScript conventions
