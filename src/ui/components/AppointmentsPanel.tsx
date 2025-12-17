@@ -1,4 +1,9 @@
+'use client';
+
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import type { Appointment } from '@/types/ui';
+import { AddAppointmentForm } from './AddAppointmentForm';
 
 interface AppointmentsPanelProps {
   nextAppointment: Appointment | null;
@@ -9,26 +14,53 @@ interface AppointmentsPanelProps {
  * UX: Accessible within one interaction from patient view
  */
 export function AppointmentsPanel({ nextAppointment }: AppointmentsPanelProps) {
+  const params = useParams();
+  const patientId = params.id as string;
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex items-center gap-2">
-        <svg
-          className="h-5 w-5 text-blue-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-          Próxima Cita
-        </h3>
-      </div>
+    <>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-5 w-5 text-blue-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+              Próxima Cita
+            </h3>
+          </div>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-600"
+            title="Programar cita"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Agregar
+          </button>
+        </div>
 
       {!nextAppointment ? (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -80,6 +112,12 @@ export function AppointmentsPanel({ nextAppointment }: AppointmentsPanelProps) {
         </div>
       )}
     </div>
+      <AddAppointmentForm
+        patientId={patientId}
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+      />
+    </>
   );
 }
 
