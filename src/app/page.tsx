@@ -1,14 +1,17 @@
 import { redirect } from 'next/navigation';
-import { mockPatients } from '@/data/mock';
+import { fetchAllPatientsForUI } from '@/data/patient-data';
 
 /**
  * Home page - redirects to first patient per timeline-first UX
  * If no patients exist, shows patient selection prompt
  */
-export default function Home() {
+export default async function Home() {
+  // Fetch all patients from the database
+  const patients = await fetchAllPatientsForUI();
+
   // If there are patients, redirect to the first one (timeline-first UX)
-  if (mockPatients.length > 0) {
-    redirect(`/patients/${mockPatients[0].id}`);
+  if (patients.length > 0) {
+    redirect(`/patients/${patients[0].id}`);
   }
 
   // No patients - show empty state with patient selection

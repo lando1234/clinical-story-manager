@@ -7,13 +7,13 @@ import { MedicationsPanel } from '@/ui/components/MedicationsPanel';
 import { AppointmentsPanel } from '@/ui/components/AppointmentsPanel';
 import { NotesPanel } from '@/ui/components/NotesPanel';
 import {
-  mockPatients,
-  getPatientById,
-  getTimelineForPatient,
-  getMedicationsForPatient,
-  getNextAppointment,
-  getMostRecentNote,
-} from '@/data/mock';
+  fetchPatientForUI,
+  fetchAllPatientsForUI,
+  fetchTimelineForUI,
+  fetchActiveMedicationsForUI,
+  fetchNextAppointmentForUI,
+  fetchMostRecentNoteForUI,
+} from '@/data/patient-data';
 
 interface PatientPageProps {
   params: Promise<{ id: string }>;
@@ -25,22 +25,26 @@ interface PatientPageProps {
  */
 export default async function PatientPage({ params }: PatientPageProps) {
   const { id } = await params;
-  const patient = getPatientById(id);
+
+  // Fetch all data in parallel for better performance
+  const [patient, allPatients, events, medications, nextAppointment, mostRecentNote] =
+    await Promise.all([
+      fetchPatientForUI(id),
+      fetchAllPatientsForUI(),
+      fetchTimelineForUI(id),
+      fetchActiveMedicationsForUI(id),
+      fetchNextAppointmentForUI(id),
+      fetchMostRecentNoteForUI(id),
+    ]);
 
   if (!patient) {
     notFound();
   }
 
-  // Get all data for this patient
-  const events = getTimelineForPatient(id);
-  const medications = getMedicationsForPatient(id);
-  const nextAppointment = getNextAppointment(id);
-  const mostRecentNote = getMostRecentNote(id);
-
   return (
     <AppShell
       sidebar={
-        <PatientSidebar patients={mockPatients} selectedPatientId={id} />
+        <PatientSidebar patients={allPatients} selectedPatientId={id} />
       }
     >
       {/* Patient context header - always visible */}
