@@ -33,7 +33,7 @@ export function PatientSidebar({ patients, selectedPatientId }: PatientSidebarPr
       {/* Header */}
       <div className="border-b border-gray-200 px-4 py-4 dark:border-gray-800">
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Patients
+          Pacientes
         </h1>
       </div>
 
@@ -45,7 +45,7 @@ export function PatientSidebar({ patients, selectedPatientId }: PatientSidebarPr
 
       {/* Footer with count */}
       <div className="border-t border-gray-200 px-4 py-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-        {filteredPatients.length} of {patients.length} patients
+        {filteredPatients.length} de {patients.length} pacientes
       </div>
     </div>
   );

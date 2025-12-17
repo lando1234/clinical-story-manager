@@ -29,10 +29,10 @@ export default function Home() {
           />
         </svg>
         <h1 className="mt-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-          Psychiatric Medical Records
+          Historiales Psiquiátricos
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          No patients registered yet. Add a patient to begin.
+          No hay pacientes registrados. Agregue un paciente para comenzar.
         </p>
       </main>
     </div>

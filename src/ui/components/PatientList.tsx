@@ -16,7 +16,7 @@ export function PatientList({ patients, selectedPatientId }: PatientListProps) {
   if (patients.length === 0) {
     return (
       <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-        No patients found
+        No se encontraron pacientes
       </div>
     );
   }
@@ -45,7 +45,7 @@ export function PatientList({ patients, selectedPatientId }: PatientListProps) {
                   <StatusBadge status={patient.status} />
                 </div>
                 <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {age} years old
+                  {age} años
                 </div>
               </Link>
             </li>
@@ -60,14 +60,14 @@ function StatusBadge({ status }: { status: Patient['status'] }) {
   if (status === 'Active') {
     return (
       <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-        Active
+        Activo
       </span>
     );
   }
   
   return (
     <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-      Inactive
+      Inactivo
     </span>
   );
 }

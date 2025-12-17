@@ -26,13 +26,13 @@ export function AppointmentsPanel({ nextAppointment }: AppointmentsPanelProps) {
           />
         </svg>
         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-          Next Appointment
+          Próxima Cita
         </h3>
       </div>
 
       {!nextAppointment ? (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          No upcoming appointments
+          Sin citas programadas
         </p>
       ) : (
         <div className="mt-3 rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
@@ -54,7 +54,7 @@ export function AppointmentsPanel({ nextAppointment }: AppointmentsPanelProps) {
             <span>{formatDate(nextAppointment.scheduled_date)}</span>
             {nextAppointment.scheduled_time && (
               <>
-                <span className="text-gray-300 dark:text-gray-600">at</span>
+                <span className="text-gray-300 dark:text-gray-600">a las</span>
                 <span>{formatTime(nextAppointment.scheduled_time)}</span>
               </>
             )}
@@ -69,7 +69,7 @@ export function AppointmentsPanel({ nextAppointment }: AppointmentsPanelProps) {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span>{nextAppointment.duration_minutes} minutes</span>
+              <span>{nextAppointment.duration_minutes} minutos</span>
             </div>
           )}
           {nextAppointment.notes && (
@@ -91,16 +91,23 @@ function StatusBadge({ status }: { status: Appointment['status'] }) {
     'No-show': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
   };
 
+  const labels: Record<Appointment['status'], string> = {
+    Scheduled: 'Programada',
+    Completed: 'Completada',
+    Cancelled: 'Cancelada',
+    'No-show': 'No asistió',
+  };
+
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status]}`}>
-      {status}
+      {labels[status]}
     </span>
   );
 }
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

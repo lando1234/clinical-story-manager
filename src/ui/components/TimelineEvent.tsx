@@ -51,7 +51,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            <span>Source: {event.source_type}</span>
+            <span>Origen: {event.source_type}</span>
           </div>
         )}
       </div>
@@ -141,7 +141,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

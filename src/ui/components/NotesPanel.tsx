@@ -26,13 +26,13 @@ export function NotesPanel({ mostRecentNote }: NotesPanelProps) {
           />
         </svg>
         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-          Most Recent Note
+          Nota Más Reciente
         </h3>
       </div>
 
       {!mostRecentNote ? (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          No finalized notes
+          Sin notas finalizadas
         </p>
       ) : (
         <div className="mt-3 space-y-3">
@@ -50,7 +50,7 @@ export function NotesPanel({ mostRecentNote }: NotesPanelProps) {
           {/* Note preview - assessment section */}
           <div className="rounded-md bg-gray-50 p-3 dark:bg-gray-700/50">
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Assessment
+              Evaluación
             </div>
             <p className="mt-1 line-clamp-3 text-sm text-gray-700 dark:text-gray-300">
               {mostRecentNote.assessment}
@@ -69,7 +69,7 @@ export function NotesPanel({ mostRecentNote }: NotesPanelProps) {
 
           {mostRecentNote.finalized_at && (
             <div className="text-xs text-gray-400 dark:text-gray-500">
-              Finalized {formatDateTime(mostRecentNote.finalized_at)}
+              Finalizada {formatDateTime(mostRecentNote.finalized_at)}
             </div>
           )}
         </div>
@@ -82,21 +82,21 @@ function StatusBadge({ status }: { status: Note['status'] }) {
   if (status === 'Finalized') {
     return (
       <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
-        Finalized
+        Finalizada
       </span>
     );
   }
 
   return (
     <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
-      Draft
+      Borrador
     </span>
   );
 }
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -105,7 +105,7 @@ function formatDate(dateString: string): string {
 
 function formatDateTime(dateTimeString: string): string {
   const date = new Date(dateTimeString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

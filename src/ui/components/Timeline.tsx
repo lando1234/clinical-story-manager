@@ -27,10 +27,10 @@ export function Timeline({ events }: TimelineProps) {
           />
         </svg>
         <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
-          No events yet
+          Sin eventos
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          This patient&apos;s timeline is empty.
+          La línea de tiempo de este paciente está vacía.
         </p>
       </div>
     );
@@ -40,10 +40,10 @@ export function Timeline({ events }: TimelineProps) {
     <div className="space-y-0">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Clinical Timeline
+          Línea de Tiempo Clínica
         </h3>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {events.length} event{events.length !== 1 ? 's' : ''}
+          {events.length} evento{events.length !== 1 ? 's' : ''}
         </span>
       </div>
       

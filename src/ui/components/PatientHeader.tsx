@@ -20,9 +20,9 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
             {patient.full_name}
           </h2>
           <div className="mt-1 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <span>DOB: {formattedDOB}</span>
+            <span>Fecha nac.: {formattedDOB}</span>
             <span className="text-gray-300 dark:text-gray-700">|</span>
-            <span>{age} years old</span>
+            <span>{age} años</span>
             {patient.contact_phone && (
               <>
                 <span className="text-gray-300 dark:text-gray-700">|</span>
@@ -43,7 +43,7 @@ function StatusIndicator({ status }: { status: Patient['status'] }) {
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
         <span className="text-sm font-medium text-green-700 dark:text-green-400">
-          Active
+          Activo
         </span>
       </div>
     );
@@ -53,7 +53,7 @@ function StatusIndicator({ status }: { status: Patient['status'] }) {
     <div className="flex items-center gap-2">
       <span className="h-2.5 w-2.5 rounded-full bg-gray-400" />
       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-        Inactive
+        Inactivo
       </span>
     </div>
   );
@@ -74,7 +74,7 @@ function calculateAge(dateOfBirth: string): number {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

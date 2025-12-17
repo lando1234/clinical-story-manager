@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Psychiatric Medical Records System",
-  description: "Clinical record management for psychiatric practice",
+  title: "Sistema de Historiales Psiquiátricos",
+  description: "Gestión de historiales clínicos para práctica psiquiátrica",
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -26,13 +26,13 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
           />
         </svg>
         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-          Active Medications
+          Medicamentos Activos
         </h3>
       </div>
 
       {medications.length === 0 ? (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          No active medications
+          Sin medicamentos activos
         </p>
       ) : (
         <ul className="mt-3 space-y-3">
@@ -53,7 +53,7 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
                 {med.frequency}
               </div>
               <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                Started {formatDate(med.start_date)}
+                Inicio {formatDate(med.start_date)}
               </div>
             </li>
           ))}
@@ -65,7 +65,7 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('es-ES', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
