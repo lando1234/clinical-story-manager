@@ -141,6 +141,12 @@ Agents MUST NEVER decide:
 - DO NOT introduce database abstraction layers for portability
 - DO NOT add database engines, embedded databases, or in-memory stores
 
+**ORM Technology**
+- DO NOT use any ORM other than Prisma
+- DO NOT write raw SQL outside Prisma (unless explicitly approved)
+- DO NOT use alternative query builders (Knex, TypeORM, Drizzle, Sequelize, etc.)
+- DO NOT bypass Prisma for database operations
+
 ### 2.4 Database Technology Lock-In
 
 **Locked Decision:**
@@ -178,6 +184,56 @@ Agents MUST NEVER decide:
 | Embedded Databases | SQLite, LevelDB, RocksDB |
 | In-Memory Stores | Redis, Memcached |
 | Search Engines | Elasticsearch, Algolia, Meilisearch |
+
+### 2.5 ORM Technology Lock-In
+
+**Locked Decision:**
+- ORM: Prisma
+- Schema location: `prisma/schema.prisma`
+
+**This decision is final and non-negotiable.**
+
+**What Agents MAY Assume About Prisma:**
+- Schema-driven model generation is available
+- Prisma Migrate handles database migrations
+- Prisma Client provides type-safe database access
+- Relations are defined declaratively in schema
+- Standard CRUD operations are generated
+- Transactions are supported via Prisma Client
+- Filtering, sorting, and pagination are available
+- Connect/disconnect for relations is available
+
+**What Agents MUST NOT Assume:**
+- Raw SQL queries are permitted (FORBIDDEN unless explicitly approved)
+- Prisma extensions are available
+- Custom generators beyond Prisma Client are available
+- Experimental features are enabled
+- Interactive transactions beyond default timeout are available
+- Database-level features not exposed by Prisma are accessible
+- Prisma Accelerate or Pulse are available
+- Third-party Prisma extensions are permitted
+
+**Prohibited Alternatives:**
+
+| Category | Prohibited |
+|----------|------------|
+| ORMs | TypeORM, Sequelize, MikroORM, Objection.js |
+| Query Builders | Knex, Kysely, Drizzle |
+| Raw Access | Direct pg client, node-postgres, postgres.js |
+| ODMs | Mongoose (not applicable but explicitly excluded) |
+
+**Schema File Ownership:**
+
+| Agent | Permission |
+|-------|------------|
+| AG-01 (Schema Agent) | WRITE — exclusive owner of `prisma/schema.prisma` |
+| All other agents | READ ONLY — may import generated Prisma Client |
+
+**Schema Modification Rules:**
+- Only AG-01 (Schema Agent) may modify `prisma/schema.prisma`
+- Any agent may PROPOSE schema changes by escalating to human
+- Schema changes require human confirmation before implementation
+- Migrations must be created via `prisma migrate dev` (by AG-01 only)
 
 ---
 
@@ -395,6 +451,9 @@ Agents MUST NOT modify:
 | `.git/*` | Git internals |
 | License files | Legal documents |
 | Any file outside project root | System protection |
+| `prisma/schema.prisma` | Schema Agent (AG-01) exclusive — see §2.5 |
+
+**Exception:** AG-01 (Schema Agent) IS authorized to modify `prisma/schema.prisma`.
 
 ### 5.4 Rules for Specification Documents
 
@@ -499,6 +558,50 @@ Agents MUST NOT modify:
 - Assume edge cases won't occur
 - Implement defensive catch-all handling
 
+### 6.5 When Technology Limitations Block Requirements
+
+**When Prisma Limitations Are Encountered:**
+
+**Agent MUST:**
+
+1. STOP current implementation task
+2. Document the specific limitation
+3. Reference the requirement being blocked
+4. Explain what Prisma cannot do in this case
+5. Wait for human decision
+
+**Examples of Prisma limitations requiring escalation:**
+- Query pattern not expressible via Prisma Client
+- Performance issue requiring raw SQL optimization
+- Schema pattern not supported by Prisma
+- Migration conflict or failure
+- Relation type not supported by Prisma
+
+**Agent MUST NOT:**
+
+- Use `$queryRaw` or `$executeRaw` without explicit approval
+- Bypass Prisma with direct database connection
+- Implement workarounds using unsupported features
+- Downgrade requirements to fit Prisma limitations
+
+**When Schema Change Is Needed:**
+
+**Agent MUST:**
+
+1. STOP current implementation task
+2. Document the required schema change
+3. Reference the specification requiring the change
+4. Explain impact on existing data (if any)
+5. Escalate to human for approval
+6. Wait for AG-01 (Schema Agent) to implement change
+
+**Agent MUST NOT:**
+
+- Modify `prisma/schema.prisma` directly (except AG-01)
+- Create migration files directly (except AG-01)
+- Assume schema changes will be approved
+- Implement code dependent on unapproved schema changes
+
 ---
 
 ## 7. Compliance Verification
@@ -563,8 +666,10 @@ If an agent detects a previous violation (by itself or another agent):
 
 ---
 
-*Document Version: 1.1*
+*Document Version: 1.2*
 *Status: Final*
 *Scope: All implementation agents*
 *Effective: Immediately upon creation*
-*Updated: PostgreSQL/Neon decision lock-in added*
+*Updates:*
+- *v1.1: PostgreSQL/Neon decision lock-in added*
+- *v1.2: Prisma ORM decision lock-in added*
