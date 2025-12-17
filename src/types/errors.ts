@@ -19,6 +19,9 @@ export type DomainErrorCode =
   | "CLINICAL_RECORD_NOT_FOUND"
   | "NOTE_NOT_FOUND"
   | "MEDICATION_NOT_FOUND"
+  | "EVENT_NOT_FOUND"
+  // Source errors
+  | "SOURCE_UNAVAILABLE"
   // State errors
   | "NOTE_ALREADY_FINALIZED"
   | "NOTE_NOT_FINALIZED"
@@ -26,7 +29,10 @@ export type DomainErrorCode =
   | "MEDICATION_NOT_ACTIVE"
   // Validation errors
   | "MISSING_REQUIRED_FIELDS"
-  | "INVALID_PREDECESSOR";
+  | "INVALID_PREDECESSOR"
+  | "INVALID_PARAMETER"
+  // State reconstruction errors
+  | "INVALID_STATE";
 
 /**
  * Domain error class for structured error handling.
