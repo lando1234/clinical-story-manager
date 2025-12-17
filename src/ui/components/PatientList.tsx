@@ -10,7 +10,8 @@ interface PatientListProps {
 
 /**
  * List of patients with selection state
- * Shows patient name, DOB, and status
+ * Shows patient name, age, and status
+ * Handles edge cases: missing data, inactive patients, no selection
  */
 export function PatientList({ patients, selectedPatientId }: PatientListProps) {
   if (patients.length === 0) {
@@ -26,27 +27,46 @@ export function PatientList({ patients, selectedPatientId }: PatientListProps) {
       <ul className="divide-y divide-gray-100 dark:divide-gray-800">
         {patients.map((patient) => {
           const isSelected = patient.id === selectedPatientId;
-          const age = calculateAge(patient.date_of_birth);
+          const age = patient.date_of_birth ? calculateAge(patient.date_of_birth) : null;
+          const isInactive = patient.status === 'Inactive';
           
           return (
             <li key={patient.id}>
               <Link
                 href={`/patients/${patient.id}`}
-                className={`block px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                className={`block px-4 py-3 transition-colors ${
                   isSelected
                     ? 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30'
-                    : 'border-l-4 border-transparent'
+                    : isInactive
+                    ? 'border-l-4 border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/50 opacity-75'
+                    : 'border-l-4 border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {patient.full_name}
+                  <span
+                    className={`font-medium ${
+                      isSelected
+                        ? 'text-gray-900 dark:text-gray-100'
+                        : isInactive
+                        ? 'text-gray-600 dark:text-gray-400'
+                        : 'text-gray-900 dark:text-gray-100'
+                    }`}
+                  >
+                    {patient.full_name || 'Sin nombre'}
                   </span>
                   <StatusBadge status={patient.status} />
                 </div>
-                <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {age} años
-                </div>
+                {age !== null && (
+                  <div
+                    className={`mt-1 text-sm ${
+                      isInactive
+                        ? 'text-gray-400 dark:text-gray-500'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    {age} años
+                  </div>
+                )}
               </Link>
             </li>
           );
@@ -72,15 +92,39 @@ function StatusBadge({ status }: { status: Patient['status'] }) {
   );
 }
 
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
+/**
+ * Calculate age from date of birth
+ * Returns null if date is invalid
+ */
+function calculateAge(dateOfBirth: string): number | null {
+  if (!dateOfBirth) {
+    return null;
   }
-  
-  return age;
+
+  try {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    
+    // Validate date
+    if (isNaN(birthDate.getTime())) {
+      return null;
+    }
+    
+    // Check if birth date is in the future
+    if (birthDate > today) {
+      return null;
+    }
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    // Ensure age is non-negative
+    return age >= 0 ? age : null;
+  } catch {
+    return null;
+  }
 }

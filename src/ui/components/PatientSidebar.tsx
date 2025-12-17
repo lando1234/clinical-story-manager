@@ -8,6 +8,7 @@ import { PatientList } from './PatientList';
 
 interface PatientSidebarProps {
   selectedPatientId: string | null;
+  patients?: Patient[]; // Optional: if provided, use it instead of fetching
 }
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
@@ -15,11 +16,14 @@ type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 /**
  * Sidebar containing patient search and list
  * Fetches patients from backend API and handles search via API calls
+ * If patients prop is provided, uses it instead of fetching
  */
-export function PatientSidebar({ selectedPatientId }: PatientSidebarProps) {
+export function PatientSidebar({ selectedPatientId, patients: initialPatients }: PatientSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
+  const [patients, setPatients] = useState<Patient[]>(initialPatients || []);
+  const [loadingState, setLoadingState] = useState<LoadingState>(
+    initialPatients ? 'success' : 'idle'
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -59,19 +63,45 @@ export function PatientSidebar({ selectedPatientId }: PatientSidebarProps) {
     }
   };
 
-  // Initial load: fetch all patients
+  // Initial load: fetch all patients only if not provided via props
   useEffect(() => {
-    fetchPatients();
+    if (!initialPatients) {
+      fetchPatients();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced search: fetch patients when search query changes
+  // Update patients when initialPatients prop changes
   useEffect(() => {
+    if (initialPatients) {
+      setPatients(initialPatients);
+      setLoadingState('success');
+      // Clear search when initial patients are provided
+      setSearchQuery('');
+    }
+  }, [initialPatients]);
+
+  // Debounced search: fetch patients when search query changes
+  // Note: Search always uses API, even if initial patients were provided
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      // When search is cleared, reset to initial patients if available
+      if (initialPatients) {
+        setPatients(initialPatients);
+        setLoadingState('success');
+        return;
+      }
+      // Otherwise fetch all patients
+      fetchPatients();
+      return;
+    }
+
     const timeoutId = setTimeout(() => {
       fetchPatients(searchQuery);
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, initialPatients]);
 
   // Determine display state
   const isEmpty = patients.length === 0;
