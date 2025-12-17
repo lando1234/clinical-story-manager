@@ -6,6 +6,7 @@ export { PatientSidebar } from './PatientSidebar';
 export { PatientSearch } from './PatientSearch';
 export { PatientList } from './PatientList';
 export { PatientHeader } from './PatientHeader';
+export { CreatePatientForm } from './CreatePatientForm';
 
 // Timeline
 export { Timeline } from './Timeline';

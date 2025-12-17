@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import type { Patient } from '@/types/ui';
 import { PatientSearch } from './PatientSearch';
 import { PatientList } from './PatientList';
@@ -82,9 +83,17 @@ export function PatientSidebar({ selectedPatientId }: PatientSidebarProps) {
     <div className="flex h-screen flex-col">
       {/* Header */}
       <div className="border-b border-gray-200 px-4 py-4 dark:border-gray-800">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Pacientes
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Pacientes
+          </h1>
+          <Link
+            href="/patients/new"
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+          >
+            Nuevo
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
@@ -162,6 +171,14 @@ export function PatientSidebar({ selectedPatientId }: PatientSidebarProps) {
                 ? 'Intente con otros términos de búsqueda'
                 : 'Cree su primer paciente para comenzar'}
             </p>
+            {!searchQuery.trim() && (
+              <Link
+                href="/patients/new"
+                className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                Crear Paciente
+              </Link>
+            )}
           </div>
         </div>
       )}
