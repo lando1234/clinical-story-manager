@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Psychiatric Medical Records System - Prisma Schema
+// Based on: docs/10_data_models.md, docs/02_domain.md
+// Database: PostgreSQL (Neon)
 
 generator client {
   provider = "prisma-client"
@@ -11,4 +9,255 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum PatientStatus {
+  Active
+  Inactive
+}
+
+enum NoteStatus {
+  Draft
+  Finalized
+}
+
+enum MedicationStatus {
+  Active
+  Discontinued
+}
+
+enum AppointmentStatus {
+  Scheduled
+  Completed
+  Cancelled
+  NoShow
+}
+
+enum EncounterType {
+  InitialEvaluation
+  FollowUp
+  CrisisIntervention
+  MedicationReview
+  TherapySession
+  PhoneConsultation
+  Other
+}
+
+enum AppointmentType {
+  InitialEvaluation
+  FollowUp
+  CrisisIntervention
+  MedicationReview
+  TherapySession
+  PhoneConsultation
+  Other
+}
+
+enum ClinicalEventType {
+  Encounter
+  MedicationStart
+  MedicationChange
+  MedicationStop
+  Hospitalization
+  LifeEvent
+  HistoryUpdate
+  Other
+}
+
+enum SourceType {
+  Note
+  Medication
+  PsychiatricHistory
+  Manual
+}
+
+// =============================================================================
+// ENTITIES
+// =============================================================================
+
+/// Patient: Individual receiving psychiatric care.
+/// Central entity around which all clinical data is organized.
+model Patient {
+  id                           String        @id @default(uuid())
+  fullName                     String        @map("full_name")
+  dateOfBirth                  DateTime      @map("date_of_birth") @db.Date
+  contactPhone                 String?       @map("contact_phone")
+  contactEmail                 String?       @map("contact_email")
+  address                      String?
+  emergencyContactName         String?       @map("emergency_contact_name")
+  emergencyContactPhone        String?       @map("emergency_contact_phone")
+  emergencyContactRelationship String?       @map("emergency_contact_relationship")
+  status                       PatientStatus @default(Active)
+  registrationDate             DateTime      @default(now()) @map("registration_date")
+  createdAt                    DateTime      @default(now()) @map("created_at")
+  updatedAt                    DateTime      @updatedAt @map("updated_at")
+
+  // Relationships
+  clinicalRecord ClinicalRecord?
+  appointments   Appointment[]
+
+  @@map("patients")
+}
+
+/// ClinicalRecord: Longitudinal container for all clinical information.
+/// Each Patient has exactly one ClinicalRecord (1:1 relationship).
+model ClinicalRecord {
+  id        String   @id @default(uuid())
+  patientId String   @unique @map("patient_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  patient            Patient              @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  psychiatricHistory PsychiatricHistory[]
+  notes              Note[]
+  medications        Medication[]
+  clinicalEvents     ClinicalEvent[]
+
+  @@map("clinical_records")
+}
+
+/// PsychiatricHistory: Comprehensive psychiatric background information.
+/// Versioned entity - updates create new versions rather than modifying existing records.
+model PsychiatricHistory {
+  id                       String    @id @default(uuid())
+  clinicalRecordId         String    @map("clinical_record_id")
+  versionNumber            Int       @map("version_number")
+  chiefComplaint           String?   @map("chief_complaint")
+  historyOfPresentIllness  String?   @map("history_of_present_illness")
+  pastPsychiatricHistory   String?   @map("past_psychiatric_history")
+  pastHospitalizations     String?   @map("past_hospitalizations")
+  suicideAttemptHistory    String?   @map("suicide_attempt_history")
+  substanceUseHistory      String?   @map("substance_use_history")
+  familyPsychiatricHistory String?   @map("family_psychiatric_history")
+  medicalHistory           String?   @map("medical_history")
+  surgicalHistory          String?   @map("surgical_history")
+  allergies                String?
+  socialHistory            String?   @map("social_history")
+  developmentalHistory     String?   @map("developmental_history")
+  isCurrent                Boolean   @default(true) @map("is_current")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  supersededAt             DateTime? @map("superseded_at")
+
+  // Relationships
+  clinicalRecord ClinicalRecord  @relation(fields: [clinicalRecordId], references: [id], onDelete: Restrict)
+  clinicalEvents ClinicalEvent[] @relation("PsychiatricHistoryEvents")
+
+  @@unique([clinicalRecordId, versionNumber])
+  @@map("psychiatric_histories")
+}
+
+/// Note: Clinical documentation for a patient encounter.
+/// Supports draft and finalized states with immutability upon finalization.
+model Note {
+  id               String        @id @default(uuid())
+  clinicalRecordId String        @map("clinical_record_id")
+  encounterDate    DateTime      @map("encounter_date") @db.Date
+  encounterType    EncounterType @map("encounter_type")
+  status           NoteStatus    @default(Draft)
+  subjective       String?
+  objective        String?
+  assessment       String?
+  plan             String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  finalizedAt      DateTime?     @map("finalized_at")
+
+  // Relationships
+  clinicalRecord ClinicalRecord  @relation(fields: [clinicalRecordId], references: [id], onDelete: Restrict)
+  addenda        Addendum[]
+  clinicalEvents ClinicalEvent[] @relation("NoteEvents")
+
+  @@map("notes")
+}
+
+/// Addendum: Immutable supplement to a finalized Note.
+/// Provides mechanism to add information or corrections without altering original.
+model Addendum {
+  id        String   @id @default(uuid())
+  noteId    String   @map("note_id")
+  content   String
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  note Note @relation(fields: [noteId], references: [id], onDelete: Restrict)
+
+  @@map("addenda")
+}
+
+/// Medication: Pharmaceutical agent record tracking complete lifecycle.
+/// Dosage changes create new records linked to predecessors via predecessorId.
+model Medication {
+  id                    String           @id @default(uuid())
+  clinicalRecordId      String           @map("clinical_record_id")
+  drugName              String           @map("drug_name")
+  dosage                Decimal          @db.Decimal(10, 2)
+  dosageUnit            String           @map("dosage_unit")
+  frequency             String
+  route                 String?
+  startDate             DateTime         @map("start_date") @db.Date
+  endDate               DateTime?        @map("end_date") @db.Date
+  prescribingReason     String           @map("prescribing_reason")
+  discontinuationReason String?          @map("discontinuation_reason")
+  status                MedicationStatus @default(Active)
+  predecessorId         String?          @map("predecessor_id")
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  // Relationships
+  clinicalRecord ClinicalRecord  @relation(fields: [clinicalRecordId], references: [id], onDelete: Restrict)
+  predecessor    Medication?     @relation("MedicationHistory", fields: [predecessorId], references: [id], onDelete: Restrict)
+  successors     Medication[]    @relation("MedicationHistory")
+  clinicalEvents ClinicalEvent[] @relation("MedicationEvents")
+
+  @@map("medications")
+}
+
+/// ClinicalEvent: Timeline entry representing clinically significant occurrence.
+/// Provides unified chronological view of patient history.
+model ClinicalEvent {
+  id               String            @id @default(uuid())
+  clinicalRecordId String            @map("clinical_record_id")
+  eventDate        DateTime          @map("event_date") @db.Date
+  eventType        ClinicalEventType @map("event_type")
+  title            String
+  description      String?
+  sourceType       SourceType?       @map("source_type")
+  sourceId         String?           @map("source_id")
+  recordedAt       DateTime          @default(now()) @map("recorded_at")
+
+  // Relationships
+  clinicalRecord       ClinicalRecord      @relation(fields: [clinicalRecordId], references: [id], onDelete: Restrict)
+  // Polymorphic source references (only one will be set based on sourceType)
+  note                 Note?               @relation("NoteEvents", fields: [noteId], references: [id], onDelete: Restrict)
+  noteId               String?             @map("note_id")
+  medication           Medication?         @relation("MedicationEvents", fields: [medicationId], references: [id], onDelete: Restrict)
+  medicationId         String?             @map("medication_id")
+  psychiatricHistory   PsychiatricHistory? @relation("PsychiatricHistoryEvents", fields: [psychiatricHistoryId], references: [id], onDelete: Restrict)
+  psychiatricHistoryId String?             @map("psychiatric_history_id")
+
+  @@map("clinical_events")
+}
+
+/// Appointment: Placeholder for scheduled future encounters.
+/// Minimal implementation supporting next-encounter tracking only.
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String            @map("patient_id")
+  scheduledDate   DateTime          @map("scheduled_date") @db.Date
+  scheduledTime   DateTime?         @map("scheduled_time") @db.Time
+  durationMinutes Int?              @map("duration_minutes")
+  appointmentType AppointmentType   @map("appointment_type")
+  status          AppointmentStatus @default(Scheduled)
+  notes           String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  // Relationships
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@map("appointments")
 }
