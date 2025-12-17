@@ -32,6 +32,7 @@ This policy exists to:
 | Data integrity violations | Timeline invariants are defined as non-negotiable |
 | Stack contamination | Technology constraints are locked |
 | UX bloat | UX boundaries prohibit unauthorized enhancements |
+| Language inconsistency | UX language requirements enforce Spanish-only UI |
 
 ---
 
@@ -416,6 +417,22 @@ Agents MUST NEVER decide:
 - Create dashboard views
 - Add data visualization
 
+### 4.5 UX Language Requirements
+
+**Mandatory Language:**
+- All user-facing text MUST be written in Spanish
+- This applies to: labels, headings, placeholders, buttons, messages, empty states, validation errors, and confirmation dialogs
+
+**Forbidden:**
+- English or mixed-language UI text
+- Placeholder text in English (e.g., "Enter name here")
+- Developer-centric wording exposed to users (e.g., "null", "undefined", "error 500")
+
+**Exceptions:**
+- Internal code identifiers may remain in English
+- Database field names and variable names are not affected
+- Log messages not shown to users are not affected
+
 ---
 
 ## 5. Document & File Rules
@@ -666,10 +683,11 @@ If an agent detects a previous violation (by itself or another agent):
 
 ---
 
-*Document Version: 1.2*
+*Document Version: 1.3*
 *Status: Final*
 *Scope: All implementation agents*
 *Effective: Immediately upon creation*
 *Updates:*
 - *v1.1: PostgreSQL/Neon decision lock-in added*
 - *v1.2: Prisma ORM decision lock-in added*
+- *v1.3: UX language requirements added (Spanish-only UI)*
