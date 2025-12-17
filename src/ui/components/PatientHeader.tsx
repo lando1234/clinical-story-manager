@@ -49,8 +49,11 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
       setSuccessMessage('Paciente desactivado exitosamente');
       setIsDialogOpen(false);
 
-      // Refresh the page to show updated status
-      router.refresh();
+      // Redirect away from archived patient page after a brief delay
+      // This ensures the user sees the success message before redirect
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
     } catch (err) {
       setError(
         err instanceof Error

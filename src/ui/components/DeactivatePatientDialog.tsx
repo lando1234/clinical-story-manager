@@ -58,37 +58,63 @@ export function DeactivatePatientDialog({
       onClick={handleCancel}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800"
+        className="w-full max-w-lg rounded-lg border-2 border-red-200 bg-white p-6 shadow-2xl dark:border-red-900/50 dark:bg-gray-800"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Desactivar Paciente
-        </h2>
+        {/* Danger indicator header */}
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+            <svg
+              className="h-6 w-6 text-red-600 dark:text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Desactivar Paciente
+          </h2>
+        </div>
 
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Está seguro de que desea desactivar a{' '}
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+        <div className="mt-4 space-y-4">
+          <p className="text-base text-gray-700 dark:text-gray-300">
+            Está a punto de desactivar a{' '}
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
               {patient.full_name}
             </span>
-            ?
+            . Esta es una acción administrativa que marcará al paciente como inactivo.
           </p>
 
-          <div className="rounded-md bg-amber-50 p-3 dark:bg-amber-900/20">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              Importante:
+          {/* Critical information box with strong visual distinction */}
+          <div className="rounded-lg border-2 border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+            <p className="mb-3 text-sm font-semibold text-red-900 dark:text-red-200">
+              ⚠️ Garantía de Preservación de Datos Clínicos:
             </p>
-            <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-700 dark:text-amber-300">
-              <li>El paciente será marcado como inactivo</li>
-              <li>Todos los datos clínicos permanecerán accesibles</li>
-              <li>El historial completo se conservará</li>
-              <li>Esta acción es reversible</li>
+            <p className="mb-2 text-sm leading-relaxed text-red-800 dark:text-red-300">
+              <strong>Todos los datos clínicos permanecerán completamente accesibles e intactos.</strong> Esto incluye:
+            </p>
+            <ul className="ml-4 list-inside list-disc space-y-1 text-sm text-red-800 dark:text-red-300">
+              <li>Historial clínico completo</li>
+              <li>Todas las notas y documentación de encuentros</li>
+              <li>Registros de medicamentos</li>
+              <li>Eventos clínicos y línea de tiempo</li>
+              <li>Historial psiquiátrico</li>
             </ul>
+            <p className="mt-3 text-sm font-medium text-red-900 dark:text-red-200">
+              ✓ Esta acción es reversible. El paciente puede ser reactivado en cualquier momento.
+            </p>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-3 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            <div className="rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
         </div>
@@ -98,7 +124,7 @@ export function DeactivatePatientDialog({
             type="button"
             onClick={handleCancel}
             disabled={isLoading}
-            className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
           >
             Cancelar
           </button>
@@ -106,9 +132,9 @@ export function DeactivatePatientDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
           >
-            {isLoading ? 'Desactivando...' : 'Desactivar'}
+            {isLoading ? 'Desactivando...' : 'Confirmar Desactivación'}
           </button>
         </div>
       </div>
