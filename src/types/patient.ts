@@ -35,6 +35,31 @@ export interface PatientSearchInput {
 }
 
 /**
+ * Input for updating a patient.
+ * All fields optional - only provided fields will be updated.
+ */
+export interface UpdatePatientInput {
+  /** Patient's complete legal name */
+  fullName?: string;
+  /** Patient's birth date */
+  dateOfBirth?: Date;
+  /** Primary phone number */
+  contactPhone?: string | null;
+  /** Primary email address */
+  contactEmail?: string | null;
+  /** Residential address */
+  address?: string | null;
+  /** Emergency contact full name */
+  emergencyContactName?: string | null;
+  /** Emergency contact phone */
+  emergencyContactPhone?: string | null;
+  /** Relationship to patient */
+  emergencyContactRelationship?: string | null;
+  /** Patient status (Active or Inactive) */
+  status?: PatientStatus;
+}
+
+/**
  * Output representation of a patient.
  * Only demographic fields - no clinical relationships.
  */

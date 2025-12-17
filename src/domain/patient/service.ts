@@ -3,6 +3,7 @@ import type {
   CreatePatientInput,
   PatientOutput,
   PatientSearchInput,
+  UpdatePatientInput,
   ValidationResult,
 } from '../../types/patient';
 import type { Patient } from '../../generated/prisma';
@@ -77,6 +78,35 @@ function validateCreateInput(input: CreatePatientInput): ValidationResult {
 }
 
 /**
+ * Validate input for updating a patient.
+ */
+function validateUpdateInput(input: UpdatePatientInput): ValidationResult {
+  // If fullName is being updated, it must be non-empty
+  if (input.fullName !== undefined && (!input.fullName || input.fullName.trim().length === 0)) {
+    return { success: false, error: 'Full name cannot be empty' };
+  }
+
+  // If dateOfBirth is being updated, it must be valid
+  if (input.dateOfBirth !== undefined) {
+    if (!(input.dateOfBirth instanceof Date) || isNaN(input.dateOfBirth.getTime())) {
+      return { success: false, error: 'Date of birth must be a valid date' };
+    }
+
+    // dateOfBirth must not be in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dob = new Date(input.dateOfBirth);
+    dob.setHours(0, 0, 0, 0);
+    
+    if (dob > today) {
+      return { success: false, error: 'Date of birth cannot be in the future' };
+    }
+  }
+
+  return { success: true };
+}
+
+/**
  * Service for patient management.
  * Contains business logic and validation.
  */
@@ -136,5 +166,60 @@ export const PatientService = {
   async listPatients(options?: { take?: number; skip?: number }): Promise<PatientOutput[]> {
     const patients = await PatientRepository.findAll(options);
     return patients.map(toPatientOutput);
+  },
+
+  /**
+   * Update a patient by their unique ID.
+   * Validates input before updating.
+   * 
+   * @throws {PatientValidationError} If validation fails
+   * @throws {PatientNotFoundError} If patient does not exist
+   */
+  async updatePatient(id: string, input: UpdatePatientInput): Promise<PatientOutput> {
+    // Check if patient exists
+    const existingPatient = await PatientRepository.findById(id);
+    if (!existingPatient) {
+      throw new PatientNotFoundError(id);
+    }
+
+    // Validate input
+    const validation = validateUpdateInput(input);
+    if (!validation.success) {
+      throw new PatientValidationError(validation.error);
+    }
+
+    // Prepare update data
+    const updateData: Parameters<typeof PatientRepository.update>[1] = {};
+
+    if (input.fullName !== undefined) {
+      updateData.fullName = input.fullName.trim();
+    }
+    if (input.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = input.dateOfBirth;
+    }
+    if (input.contactPhone !== undefined) {
+      updateData.contactPhone = input.contactPhone;
+    }
+    if (input.contactEmail !== undefined) {
+      updateData.contactEmail = input.contactEmail;
+    }
+    if (input.address !== undefined) {
+      updateData.address = input.address;
+    }
+    if (input.emergencyContactName !== undefined) {
+      updateData.emergencyContactName = input.emergencyContactName;
+    }
+    if (input.emergencyContactPhone !== undefined) {
+      updateData.emergencyContactPhone = input.emergencyContactPhone;
+    }
+    if (input.emergencyContactRelationship !== undefined) {
+      updateData.emergencyContactRelationship = input.emergencyContactRelationship;
+    }
+    if (input.status !== undefined) {
+      updateData.status = input.status;
+    }
+
+    const patient = await PatientRepository.update(id, updateData);
+    return toPatientOutput(patient);
   },
 };

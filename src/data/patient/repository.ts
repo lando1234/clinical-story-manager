@@ -69,4 +69,14 @@ export const PatientRepository = {
       orderBy: { fullName: 'asc' },
     });
   },
+
+  /**
+   * Update a patient by their unique ID.
+   */
+  async update(id: string, data: Prisma.PatientUpdateInput): Promise<Patient> {
+    return prisma.patient.update({
+      where: { id },
+      data,
+    });
+  },
 };
