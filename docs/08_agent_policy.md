@@ -135,6 +135,50 @@ Agents MUST NEVER decide:
 - DO NOT implement data synchronization
 - DO NOT create backup mechanisms
 
+**Database Technology**
+- DO NOT use any database other than PostgreSQL
+- DO NOT use any provider other than Neon
+- DO NOT introduce database abstraction layers for portability
+- DO NOT add database engines, embedded databases, or in-memory stores
+
+### 2.4 Database Technology Lock-In
+
+**Locked Decision:**
+- Database: PostgreSQL
+- Provider: Neon (serverless Postgres)
+
+**This decision is final and non-negotiable.**
+
+**What Agents MAY Assume About PostgreSQL:**
+- Standard SQL syntax is available
+- Foreign key constraints are enforced
+- Transactions with ACID guarantees are available
+- Timestamps with timezone support are available
+- UUID generation is available
+- Standard data types (TEXT, INTEGER, BOOLEAN, DATE, TIMESTAMP, DECIMAL) are available
+- NOT NULL and UNIQUE constraints are supported
+- Primary key and foreign key constraints are supported
+
+**What Agents MUST NOT Assume:**
+- PostgreSQL extensions are available (DO NOT use pg_trgm, ltree, hstore, etc.)
+- Triggers are available (DO NOT create database triggers)
+- Stored procedures are available (DO NOT create functions in database)
+- Full-text search extensions are available
+- Custom types beyond standard are available
+- Row-level security is available
+- Listen/notify is available
+- Neon-specific features beyond standard Postgres
+
+**Prohibited Alternatives:**
+
+| Category | Prohibited |
+|----------|------------|
+| SQL Databases | MySQL, MariaDB, SQLite, SQL Server, Oracle |
+| NoSQL Databases | MongoDB, DynamoDB, Firestore, CouchDB |
+| Embedded Databases | SQLite, LevelDB, RocksDB |
+| In-Memory Stores | Redis, Memcached |
+| Search Engines | Elasticsearch, Algolia, Meilisearch |
+
 ---
 
 ## 3. MCP Usage Rules
@@ -217,6 +261,40 @@ Agents MUST NEVER decide:
 - If search suggests specification may be incomplete: Report finding, do not act
 - If search reveals security concern: STOP and report immediately
 
+### 3.5 Postgres MCP
+
+**When Postgres MCP May Be Enabled:**
+- During schema implementation by Schema Agent (AG-01)
+- During migration execution
+- During data integrity verification
+- During query development and testing
+- When explicitly instructed by human
+
+**Allowed When Enabled:**
+- Reading schema information
+- Executing SELECT queries for verification
+- Executing INSERT, UPDATE for test data
+- Executing schema DDL when instructed
+- Running migrations when instructed
+- Verifying foreign key relationships
+- Checking constraint enforcement
+
+**Forbidden Even When Enabled:**
+- Creating or modifying triggers
+- Creating stored procedures or functions
+- Enabling or using PostgreSQL extensions
+- Modifying database roles or permissions
+- Accessing system catalogs for modification
+- Creating materialized views
+- Executing TRUNCATE or DROP on clinical data tables
+- Modifying connection or runtime parameters
+- Any action that would delete clinical data
+
+**Escalation:**
+- If schema change is needed after initial implementation: STOP and request confirmation
+- If query performance requires extension: STOP and report limitation
+- If Neon-specific behavior is observed: Document and continue if non-blocking
+
 ---
 
 ## 4. Scope Protection Rules
@@ -254,15 +332,16 @@ Agents MUST NEVER decide:
 
 **DO:**
 - Use only technologies defined in `07_stack_ux_constraints.md`
+- Use PostgreSQL (Neon) as the only database
 - Respect explicit exclusions
 - Maintain single-runtime model
-- Keep embedded database approach
 
 **DO NOT:**
-- Suggest alternative technologies
+- Suggest alternative databases or providers
 - Add packages that introduce excluded patterns
-- Create abstraction layers for technology swapping
+- Create abstraction layers for database portability
 - Implement features that require excluded technologies
+- Use database features not permitted in §2.4
 
 ### 4.4 UX Over-Design Prevention
 
@@ -484,7 +563,8 @@ If an agent detects a previous violation (by itself or another agent):
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 1.1*
 *Status: Final*
 *Scope: All implementation agents*
 *Effective: Immediately upon creation*
+*Updated: PostgreSQL/Neon decision lock-in added*
