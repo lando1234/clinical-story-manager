@@ -11,7 +11,17 @@ interface PatientHeaderProps {
 
 /**
  * Patient context header - always visible per UX constraints
- * Shows patient name, DOB, age, and key demographics
+ * Shows patient identity information as persistent context (not part of timeline)
+ * Per spec: docs/25_patient_info_timeline_view.md
+ * 
+ * Displays:
+ * - Full name
+ * - Age (calculated from date of birth)
+ * - Date of birth
+ * - Status (Active/Inactive)
+ * - Internal identifier
+ * 
+ * Note: Contact information is excluded per spec (not relevant for clinical context)
  */
 export function PatientHeader({ patient }: PatientHeaderProps) {
   const router = useRouter();
@@ -116,12 +126,8 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
               <span>Fecha nac.: {formattedDOB}</span>
               <span className="text-gray-300 dark:text-gray-700">|</span>
               <span>{age} años</span>
-              {patient.contact_phone && (
-                <>
-                  <span className="text-gray-300 dark:text-gray-700">|</span>
-                  <span>{patient.contact_phone}</span>
-                </>
-              )}
+              <span className="text-gray-300 dark:text-gray-700">|</span>
+              <span className="font-mono text-xs">ID: {patient.id}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -208,9 +214,9 @@ function calculateAge(dateOfBirth: string): number {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-AR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // Format: "DD de [mes] de YYYY" per spec 25_patient_info_timeline_view.md
+  const day = date.getDate();
+  const month = date.toLocaleDateString('es-AR', { month: 'long' });
+  const year = date.getFullYear();
+  return `${day} de ${month} de ${year}`;
 }
