@@ -65,13 +65,14 @@ Los datos de identidad son aquellos que identifican únicamente al paciente:
 | **Nombre completo** | Identificación primaria del paciente | Patient.fullName |
 | **Fecha de nacimiento** | Identificación y cálculo de edad | Patient.dateOfBirth |
 | **Edad** | Contexto demográfico derivado | Calculada desde Patient.dateOfBirth |
-| **Identificador interno** | Identificación única del sistema | Patient.id |
 
 **Características:**
 - Son datos administrativos, no clínicos
 - Pueden modificarse (correcciones, cambios legales)
 - No generan eventos en la timeline cuando cambian
 - Son necesarios para la identificación inequívoca
+
+**Exclusión explícita:** El identificador interno (Patient.id) **NUNCA debe mostrarse** en la vista de timeline. Es un dato técnico del sistema que no es relevante para el contexto clínico.
 
 ### 2.3 Datos Administrativos Relevantes
 
@@ -96,8 +97,9 @@ La información del paciente se presenta en dos niveles:
 - Ubicación: Header fijo en la parte superior de la vista
 
 **Nivel 2 - Panel de Información (acceso rápido):**
-- Información administrativa completa: identificador, datos de contacto, contacto de emergencia
+- Información administrativa completa: datos de contacto, contacto de emergencia
 - Ubicación: Panel en la columna lateral, debajo de los paneles de medicamentos, turnos y notas
+- **Exclusión:** El identificador interno nunca se muestra en este panel ni en ningún lugar de la vista
 
 ### 2.5 Exclusiones Explícitas
 
@@ -177,9 +179,10 @@ Un panel separado ubicado debajo de los paneles de medicamentos, turnos y notas 
 
 | Campo | Descripción | Formato | Ubicación |
 |-------|-------------|---------|-----------|
-| **Identificador interno** | Identificador único del sistema | Identificador numérico o alfanumérico | Panel de información |
 | **Datos de contacto** | Teléfono, email, dirección del paciente | Texto según corresponda | Panel de información (opcional) |
 | **Contacto de emergencia** | Nombre, teléfono y relación del contacto de emergencia | Texto según corresponda | Panel de información (opcional) |
+
+**Restricción absoluta:** El identificador interno (ID del paciente) **NUNCA debe mostrarse** en ningún lugar de la vista de timeline, ni en el header ni en el panel de información. Es un dato técnico del sistema que no es relevante para el contexto clínico.
 
 ### 4.2 Cálculo de Edad
 
@@ -230,11 +233,12 @@ Columna Lateral (1/3 ancho)
 
 Los siguientes campos **NO** se muestran en ningún lugar de la vista de timeline:
 
+- **Identificador interno (ID del paciente)** — Restricción absoluta: nunca debe mostrarse
 - Fecha de registro
 - Fechas de creación/actualización del registro
 - Metadatos del sistema
 
-**Razón:** Estos son metadatos técnicos, no información relevante para el contexto clínico.
+**Razón:** El identificador interno es un dato técnico del sistema usado internamente para referencias, pero no es relevante para el contexto clínico. Los demás son metadatos técnicos que tampoco aportan al contexto clínico.
 
 ---
 
@@ -349,9 +353,9 @@ Vista de Timeline
 │   ├── Panel de Turnos
 │   ├── Panel de Notas
 │   └── Panel de Información del Paciente (fuente: Patient)
-│       ├── Identificador interno
 │       ├── Datos de contacto (opcional)
 │       └── Contacto de emergencia (opcional)
+│       └── [Identificador interno NUNCA se muestra]
 │
 └── Timeline de Eventos (fuente: ClinicalRecord)
     ├── Evento 1
@@ -396,7 +400,7 @@ La información siempre visible proporciona acceso inmediato al contexto esencia
 
 | Necesidad del Clínico | Solución |
 |-----------------------|----------|
-| **Confirmar identidad antes de documentar** | Nombre e identificador siempre visibles |
+| **Confirmar identidad antes de documentar** | Nombre siempre visible |
 | **Calcular edad para decisión clínica** | Edad calculada y visible |
 | **Verificar estado del paciente** | Estado siempre visible |
 | **Contexto para interpretar eventos** | Información demográfica constante |
@@ -609,9 +613,10 @@ La información del paciente en la vista de timeline NO es:
 4. Estado del paciente (Activo/Inactivo)
 
 **En el Panel de Información:**
-5. Identificador interno
-6. Datos de contacto (si están disponibles)
-7. Contacto de emergencia (si está disponible)
+5. Datos de contacto (si están disponibles)
+6. Contacto de emergencia (si está disponible)
+
+**Restricción:** El identificador interno nunca se muestra en ningún lugar de la vista.
 
 ### 11.4 Principios Fundamentales
 

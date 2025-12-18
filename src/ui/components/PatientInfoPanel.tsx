@@ -27,16 +27,6 @@ export function PatientInfoPanel({ patient }: PatientInfoPanelProps) {
       </h3>
 
       <div className="space-y-4">
-        {/* Internal Identifier */}
-        <div>
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            Identificador Interno
-          </dt>
-          <dd className="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100">
-            {patient.id}
-          </dd>
-        </div>
-
         {/* Contact Information */}
         {hasContactInfo && (
           <div>
