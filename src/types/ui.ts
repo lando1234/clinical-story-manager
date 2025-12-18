@@ -9,7 +9,8 @@
 
 export type EventType =
   | 'Inicio de Historia Clínica'
-  | 'Encuentro'
+  | 'Nota clínica'
+  | 'Turno'
   | 'Inicio de Medicación'
   | 'Cambio de Medicación'
   | 'Suspensión de Medicación'

@@ -97,7 +97,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
               {isNote
                 ? 'Nota Clínica asociada'
                 : isEncounter
-                ? 'Turno agendado'
+                ? 'Turno realizado'
                 : event.source_type === 'Appointment'
                 ? 'Origen: Turno'
                 : event.source_type === 'Medication'
@@ -213,7 +213,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-AR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

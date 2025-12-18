@@ -167,7 +167,7 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-AR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

@@ -145,7 +145,7 @@ function StatusBadge({ status }: { status: Appointment['status'] }) {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-AR', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

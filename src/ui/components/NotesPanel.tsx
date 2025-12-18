@@ -134,7 +134,7 @@ function StatusBadge({ status }: { status: Note['status'] }) {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-AR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -143,7 +143,7 @@ function formatDate(dateString: string): string {
 
 function formatDateTime(dateTimeString: string): string {
   const date = new Date(dateTimeString);
-  return date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-AR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

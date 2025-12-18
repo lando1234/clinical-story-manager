@@ -364,7 +364,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
             </label>
             <input
               type="text"
-              value={new Date(originalPatient.registrationDate).toLocaleDateString('es-ES', {
+              value={new Date(originalPatient.registrationDate).toLocaleDateString('es-AR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -384,7 +384,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
             </label>
             <input
               type="text"
-              value={new Date(originalPatient.createdAt).toLocaleString('es-ES', {
+              value={new Date(originalPatient.createdAt).toLocaleString('es-AR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -406,7 +406,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
             </label>
             <input
               type="text"
-              value={new Date(originalPatient.updatedAt).toLocaleString('es-ES', {
+              value={new Date(originalPatient.updatedAt).toLocaleString('es-AR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',

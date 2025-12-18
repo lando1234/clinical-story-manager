@@ -383,7 +383,7 @@ function calculateAge(dateOfBirth: Date): number {
 
 function formatDate(date: Date): string {
   const d = new Date(date);
-  return d.toLocaleDateString('es-ES', {
+  return d.toLocaleDateString('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -392,7 +392,7 @@ function formatDate(date: Date): string {
 
 function formatDateTime(date: Date): string {
   const d = new Date(date);
-  return d.toLocaleString('es-ES', {
+  return d.toLocaleString('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
