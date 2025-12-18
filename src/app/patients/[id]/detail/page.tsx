@@ -18,7 +18,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
     <AppShell
       sidebar={<PatientSidebar selectedPatientId={id} />}
     >
-      <div className="p-6">
+      <div className="p-4 pt-16 lg:p-6 lg:pt-6">
         <PatientDetailView patientId={id} />
       </div>
     </AppShell>

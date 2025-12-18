@@ -13,7 +13,7 @@ export default async function PatientsPage() {
     <AppShell
       sidebar={<PatientSidebar patients={allPatients} selectedPatientId={null} />}
     >
-      <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="flex min-h-screen items-center justify-center p-4 pt-16 lg:p-6 lg:pt-6">
         <div className="text-center">
           <svg
             className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600"

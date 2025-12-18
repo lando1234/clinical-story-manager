@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Patient } from '@/types/ui';
 import { PatientSearch } from './PatientSearch';
 import { PatientList } from './PatientList';
+import { useSidebar } from './AppShell';
 
 interface PatientSidebarProps {
   selectedPatientId: string | null;
@@ -19,6 +20,7 @@ type LoadingState = 'idle' | 'loading' | 'success' | 'error';
  * If patients prop is provided, uses it instead of fetching
  */
 export function PatientSidebar({ selectedPatientId, patients: initialPatients }: PatientSidebarProps) {
+  const { setIsOpen } = useSidebar();
   const [searchQuery, setSearchQuery] = useState('');
   const [patients, setPatients] = useState<Patient[]>(initialPatients || []);
   const [loadingState, setLoadingState] = useState<LoadingState>(
@@ -117,12 +119,34 @@ export function PatientSidebar({ selectedPatientId, patients: initialPatients }:
           <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Pacientes
           </h1>
-          <Link
-            href="/patients/new"
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
-          >
-            Nuevo
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/patients/new"
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              Nuevo
+            </Link>
+            {/* Mobile close button */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="rounded-md p-1.5 text-gray-600 hover:bg-gray-100 lg:hidden dark:text-gray-400 dark:hover:bg-gray-800"
+              aria-label="Cerrar lista de pacientes"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 

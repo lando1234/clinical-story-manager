@@ -52,15 +52,15 @@ export default async function PatientPage({ params }: PatientPageProps) {
       <PatientHeader patient={patient} />
 
       {/* Main content grid */}
-      <div className="p-6">
+      <div className="p-4 pt-16 lg:p-6 lg:pt-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Timeline - primary content (2/3 width on large screens) */}
-          <div className="lg:col-span-2">
+          <div className="order-1 lg:col-span-2 lg:order-1">
             <Timeline events={events} />
           </div>
 
-          {/* Quick access panels (1/3 width on large screens) */}
-          <div className="space-y-6">
+          {/* Quick access panels (1/3 width on large screens, stacked on mobile) */}
+          <div className="order-2 space-y-6 lg:order-2">
             <MedicationsPanel medications={medications} />
             <AppointmentsPanel nextAppointment={nextAppointment} />
             <NotesPanel mostRecentNote={mostRecentNote} />

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { Patient } from '@/types/ui';
+import { useSidebar } from './AppShell';
 
 interface PatientListProps {
   patients: Patient[];
@@ -14,6 +15,8 @@ interface PatientListProps {
  * Handles edge cases: missing data, inactive patients, no selection
  */
 export function PatientList({ patients, selectedPatientId }: PatientListProps) {
+  const { setIsOpen } = useSidebar();
+
   if (patients.length === 0) {
     return (
       <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -21,6 +24,11 @@ export function PatientList({ patients, selectedPatientId }: PatientListProps) {
       </div>
     );
   }
+
+  const handlePatientClick = () => {
+    // Close sidebar on mobile when patient is selected
+    setIsOpen(false);
+  };
 
   return (
     <nav className="flex-1 overflow-y-auto">
@@ -34,6 +42,7 @@ export function PatientList({ patients, selectedPatientId }: PatientListProps) {
             <li key={patient.id}>
               <Link
                 href={`/patients/${patient.id}`}
+                onClick={handlePatientClick}
                 className={`block px-4 py-3 transition-colors ${
                   isSelected
                     ? 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30'

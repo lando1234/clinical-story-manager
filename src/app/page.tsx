@@ -15,10 +15,10 @@ export default async function Home() {
     <AppShell
       sidebar={<PatientSidebar patients={allPatients} selectedPatientId={null} />}
     >
-      <div className="p-6">
+      <div className="p-4 pt-16 lg:p-6 lg:pt-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 lg:text-2xl">
               Vista General
             </h1>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -26,11 +26,18 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* Patient Statistics */}
-          <PatientStats />
+          {/* Responsive layout: stacked on mobile, side-by-side on desktop */}
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2">
+            {/* Upcoming Appointments - Priority 2 (shown first on mobile per spec) */}
+            <div className="order-1 lg:order-2">
+              <UpcomingAppointments />
+            </div>
 
-          {/* Upcoming Appointments */}
-          <UpcomingAppointments />
+            {/* Patient Statistics - Priority 3 (shown second on mobile per spec) */}
+            <div className="order-2 lg:order-1">
+              <PatientStats />
+            </div>
+          </div>
         </div>
       </div>
     </AppShell>

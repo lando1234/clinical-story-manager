@@ -116,25 +116,25 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
 
   return (
     <>
-      <header className="border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900 lg:px-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 lg:text-xl">
               {patient.full_name}
             </h2>
-            <div className="mt-1 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400 lg:gap-4 lg:text-sm">
               <span>Fecha nac.: {formattedDOB}</span>
-              <span className="text-gray-300 dark:text-gray-700">|</span>
+              <span className="hidden text-gray-300 dark:text-gray-700 lg:inline">|</span>
               <span>{age} años</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
             <StatusIndicator status={patient.status} />
             {patient.status === 'Active' ? (
               <button
                 onClick={() => setIsDialogOpen(true)}
                 disabled={isLoading}
-                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600"
+                className="rounded-md bg-red-600 px-2 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-600 lg:px-3 lg:text-sm"
               >
                 Desactivar
               </button>
@@ -142,7 +142,7 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
               <button
                 onClick={handleReactivate}
                 disabled={isLoading}
-                className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
+                className="rounded-md bg-green-600 px-2 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600 lg:px-3 lg:text-sm"
               >
                 {isLoading ? 'Reactivando...' : 'Reactivar'}
               </button>
