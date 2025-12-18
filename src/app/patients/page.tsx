@@ -1,14 +1,17 @@
 import { AppShell } from '@/ui/components/AppShell';
 import { PatientSidebar } from '@/ui/components/PatientSidebar';
+import { fetchAllPatientsForUI } from '@/data/patient-data';
 
 /**
  * Patients list page - primary view of the system
  * Shows patient list in sidebar and prompts user to select a patient
  */
 export default async function PatientsPage() {
+  const allPatients = await fetchAllPatientsForUI();
+
   return (
     <AppShell
-      sidebar={<PatientSidebar selectedPatientId={null} />}
+      sidebar={<PatientSidebar patients={allPatients} selectedPatientId={null} />}
     >
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="text-center">
