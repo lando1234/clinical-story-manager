@@ -30,28 +30,34 @@ import type {
 // =============================================================================
 
 /**
- * Maps backend ClinicalEventType enum to UI EventType string.
+ * Maps backend ClinicalEventType enum to UI EventType string (Spanish).
+ * Per spec: docs/21_localizacion_eventos_clinicos.md
  */
 function mapEventType(eventType: ClinicalEventType): UIEventType {
   const mapping: Record<ClinicalEventType, UIEventType> = {
-    Encounter: 'Encounter',
-    MedicationStart: 'Medication Start',
-    MedicationChange: 'Medication Change',
-    MedicationStop: 'Medication Stop',
-    Hospitalization: 'Hospitalization',
-    LifeEvent: 'Life Event',
-    HistoryUpdate: 'History Update',
-    Other: 'Other',
+    Foundational: 'Inicio de Historia Clínica',
+    NOTE: 'Nota clínica',
+    Encounter: 'Turno',
+    MedicationStart: 'Inicio de Medicación',
+    MedicationChange: 'Cambio de Medicación',
+    MedicationStop: 'Suspensión de Medicación',
+    Hospitalization: 'Hospitalización',
+    LifeEvent: 'Evento Vital',
+    HistoryUpdate: 'Actualización de Historia',
+    Other: 'Otro',
   };
   return mapping[eventType];
 }
 
 /**
- * Maps backend SourceType enum to UI SourceType.
+ * Maps backend SourceType enum to UI SourceType (Spanish labels).
+ * Per spec: docs/21_localizacion_eventos_clinicos.md
  */
 function mapSourceType(sourceType: SourceType | null): UITimelineEvent['source_type'] {
   if (sourceType === null) return null;
   if (sourceType === 'Manual') return null;
+  // SourceType values are kept as-is for internal consistency
+  // but displayed labels should be in Spanish in UI components
   return sourceType as UITimelineEvent['source_type'];
 }
 

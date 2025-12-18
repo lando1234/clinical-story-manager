@@ -10,8 +10,8 @@ import {
   SourceType,
   EncounterType,
   MedicationStatus,
+  Prisma,
 } from "@/generated/prisma";
-import { Decimal } from "@/generated/prisma/runtime/library";
 
 // =============================================================================
 // COMMON TYPES
@@ -72,7 +72,7 @@ export interface FullTimelineResult {
 export interface ActiveMedication {
   medicationIdentifier: string;
   drugName: string;
-  dosage: Decimal;
+  dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
   startDate: Date;
@@ -138,7 +138,7 @@ export interface CurrentStateResult {
 export interface HistoricalActiveMedication {
   medicationIdentifier: string;
   drugName: string;
-  dosage: Decimal;
+  dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
   startDate: Date;
@@ -252,7 +252,7 @@ export interface NoteSourceData {
 export interface MedicationSourceData {
   medicationIdentifier: string;
   drugName: string;
-  dosage: Decimal;
+  dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
   route: string | null;
@@ -276,12 +276,29 @@ export interface PsychiatricHistorySourceData {
 }
 
 /**
+ * Appointment source data.
+ */
+export interface AppointmentSourceData {
+  appointmentIdentifier: string;
+  scheduledDate: Date;
+  scheduledTime: Date | null;
+  durationMinutes: number | null;
+  appointmentType: string;
+  status: string;
+  notes: string | null;
+}
+
+/**
  * Event source result - discriminated union based on sourceType.
  */
 export type EventSourceResult =
   | {
       sourceType: "Note";
       note: NoteSourceData;
+    }
+  | {
+      sourceType: "Appointment";
+      appointment: AppointmentSourceData;
     }
   | {
       sourceType: "Medication";

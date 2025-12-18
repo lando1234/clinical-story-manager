@@ -14,6 +14,7 @@ export interface CreateTimelineEventInput {
   sourceId: string | null;
   // Polymorphic source references - only one should be set based on sourceType
   noteId?: string;
+  appointmentId?: string;
   medicationId?: string;
   psychiatricHistoryId?: string;
 }
@@ -21,16 +22,19 @@ export interface CreateTimelineEventInput {
 /**
  * Event type priority for ordering (from 14_timeline_contracts.md G-ORD-2).
  * Lower number = higher priority (appears first when dates match).
+ * Foundational has priority 0 (highest) to always appear first.
  */
 export const EVENT_TYPE_PRIORITY: Record<ClinicalEventType, number> = {
-  Encounter: 1,
-  MedicationStart: 2,
-  MedicationChange: 3,
-  MedicationStop: 4,
-  Hospitalization: 5,
-  LifeEvent: 6,
-  HistoryUpdate: 7,
-  Other: 8,
+  Foundational: 0,
+  NOTE: 1,
+  Encounter: 2,
+  MedicationStart: 3,
+  MedicationChange: 4,
+  MedicationStop: 5,
+  Hospitalization: 6,
+  LifeEvent: 7,
+  HistoryUpdate: 8,
+  Other: 9,
 };
 
 /**

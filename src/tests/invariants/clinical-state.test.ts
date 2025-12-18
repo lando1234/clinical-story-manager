@@ -19,7 +19,7 @@ import {
   createTestFinalizedNote,
   createTestAppointment,
   createTestEvent,
-  createTestEncounterEvent,
+  createTestNoteEvent,
 } from "../utils/test-fixtures";
 import {
   daysAgo,
@@ -496,10 +496,10 @@ describe("Clinical State Invariants", () => {
   });
 
   // ===========================================================================
-  // INV-STATE-07: Finalized notes have exactly one encounter event
+  // INV-STATE-07: Finalized notes have exactly one NOTE event
   // ===========================================================================
   describe("INV-STATE-07: Finalized Notes Generate Events", () => {
-    it("finalized note has corresponding encounter event", async () => {
+    it("finalized note has corresponding NOTE event", async () => {
       const { patient, clinicalRecord } = await createCompletePatientSetup();
 
       const note = await createTestFinalizedNote({
@@ -507,12 +507,12 @@ describe("Clinical State Invariants", () => {
         encounterDate: daysAgo(5),
       });
 
-      // Create the encounter event (simulating what would happen on finalization)
-      await createTestEncounterEvent(
+      // Create the NOTE event (simulating what would happen on finalization)
+      await createTestNoteEvent(
         clinicalRecord.id,
         note.id,
         note.encounterDate,
-        "Clinical Encounter"
+        "Nota clínica"
       );
 
       // Verify event exists
@@ -520,14 +520,14 @@ describe("Clinical State Invariants", () => {
         where: {
           clinicalRecordId: clinicalRecord.id,
           sourceId: note.id,
-          eventType: ClinicalEventType.Encounter,
+          eventType: ClinicalEventType.NOTE,
         },
       });
 
       expect(events.length).toBe(1);
     });
 
-    it("encounter event is created at or after note finalization", async () => {
+    it("NOTE event is created at or after note finalization", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
       const note = await createTestFinalizedNote({
@@ -536,11 +536,11 @@ describe("Clinical State Invariants", () => {
       });
 
       // Create event after note is finalized
-      const event = await createTestEncounterEvent(
+      const event = await createTestNoteEvent(
         clinicalRecord.id,
         note.id,
         note.encounterDate,
-        "Clinical Encounter"
+        "Nota clínica"
       );
 
       // Event recorded_at should be >= note finalized_at
@@ -590,11 +590,11 @@ describe("Clinical State Invariants", () => {
         encounterDate: daysAgo(3),
       });
 
-      await createTestEncounterEvent(
+      await createTestNoteEvent(
         clinicalRecord.id,
         finalizedNote.id,
         finalizedNote.encounterDate,
-        "Finalized Encounter"
+        "Nota clínica"
       );
 
       // Timeline should only show finalized note event

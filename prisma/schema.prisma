@@ -58,6 +58,8 @@ enum AppointmentType {
 }
 
 enum ClinicalEventType {
+  Foundational
+  NOTE
   Encounter
   MedicationStart
   MedicationChange
@@ -70,6 +72,7 @@ enum ClinicalEventType {
 
 enum SourceType {
   Note
+  Appointment
   Medication
   PsychiatricHistory
   Manual
@@ -234,6 +237,8 @@ model ClinicalEvent {
   // Polymorphic source references (only one will be set based on sourceType)
   note                 Note?               @relation("NoteEvents", fields: [noteId], references: [id], onDelete: Restrict)
   noteId               String?             @map("note_id")
+  appointment          Appointment?         @relation("AppointmentEvents", fields: [appointmentId], references: [id], onDelete: Restrict)
+  appointmentId        String?             @map("appointment_id")
   medication           Medication?         @relation("MedicationEvents", fields: [medicationId], references: [id], onDelete: Restrict)
   medicationId         String?             @map("medication_id")
   psychiatricHistory   PsychiatricHistory? @relation("PsychiatricHistoryEvents", fields: [psychiatricHistoryId], references: [id], onDelete: Restrict)
@@ -257,7 +262,8 @@ model Appointment {
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
   // Relationships
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  clinicalEvents ClinicalEvent[] @relation("AppointmentEvents")
 
   @@map("appointments")
 }

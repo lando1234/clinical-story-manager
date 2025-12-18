@@ -12,6 +12,11 @@ export function TimelineEvent({ event }: TimelineEventProps) {
   const { icon, color } = getEventStyle(event.event_type);
   const formattedDate = formatDate(event.event_timestamp);
 
+  // Estilo diferenciado para evento fundacional (neutro, sin acciones)
+  const isFoundational = event.event_type === 'Inicio de Historia Clínica';
+  const isNote = event.event_type === 'Nota clínica';
+  const isEncounter = event.event_type === 'Turno';
+
   return (
     <div className="relative flex gap-4 pb-8 last:pb-0">
       {/* Timeline connector line */}
@@ -19,39 +24,88 @@ export function TimelineEvent({ event }: TimelineEventProps) {
       
       {/* Event icon */}
       <div
-        className={`relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${color}`}
+        className={`relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${color} ${
+          isFoundational ? 'opacity-75' : ''
+        }`}
       >
         {icon}
       </div>
 
       {/* Event content */}
-      <div className="flex-1 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div
+        className={`flex-1 rounded-lg border p-4 shadow-sm ${
+          isFoundational
+            ? 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50'
+            : isNote
+            ? 'border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-900/10'
+            : isEncounter
+            ? 'border-purple-200 bg-purple-50/30 dark:border-purple-800 dark:bg-purple-900/10'
+            : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+        }`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <span
+              className={`text-xs font-medium uppercase tracking-wide ${
+                isFoundational
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
               {event.event_type}
             </span>
-            <h4 className="mt-1 font-medium text-gray-900 dark:text-gray-100">
+            <h4
+              className={`mt-1 font-medium ${
+                isFoundational
+                  ? 'text-gray-600 dark:text-gray-400'
+                  : 'text-gray-900 dark:text-gray-100'
+              }`}
+            >
               {event.title}
             </h4>
           </div>
-          <time className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400">
+          <time
+            className={`flex-shrink-0 text-sm ${
+              isFoundational
+                ? 'text-gray-400 dark:text-gray-500'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
             {formattedDate}
           </time>
         </div>
         
         {event.description && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          <p
+            className={`mt-2 text-sm ${
+              isFoundational
+                ? 'text-gray-500 dark:text-gray-400'
+                : 'text-gray-600 dark:text-gray-300'
+            }`}
+          >
             {event.description}
           </p>
         )}
 
-        {event.source_type && (
+        {/* Mostrar origen solo para eventos clínicos (no fundacional) */}
+        {event.source_type && !isFoundational && (
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            <span>Origen: {event.source_type}</span>
+            <span>
+              {isNote
+                ? 'Nota Clínica asociada'
+                : isEncounter
+                ? 'Turno agendado'
+                : event.source_type === 'Appointment'
+                ? 'Origen: Turno'
+                : event.source_type === 'Medication'
+                ? 'Origen: Medicación'
+                : event.source_type === 'PsychiatricHistory'
+                ? 'Origen: Historia Psiquiátrica'
+                : `Origen: ${event.source_type}`}
+            </span>
           </div>
         )}
       </div>
@@ -64,16 +118,34 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
   color: string;
 } {
   switch (eventType) {
-    case 'Encounter':
+    case 'Inicio de Historia Clínica':
+      return {
+        icon: (
+          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
+        color: 'bg-slate-500',
+      };
+    case 'Nota clínica':
+      return {
+        icon: (
+          <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        ),
+        color: 'bg-blue-500',
+      };
+    case 'Turno':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         ),
-        color: 'bg-blue-500',
+        color: 'bg-purple-500',
       };
-    case 'Medication Start':
+    case 'Inicio de Medicación':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +154,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
         ),
         color: 'bg-green-500',
       };
-    case 'Medication Change':
+    case 'Cambio de Medicación':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +163,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
         ),
         color: 'bg-yellow-500',
       };
-    case 'Medication Stop':
+    case 'Suspensión de Medicación':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +172,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
         ),
         color: 'bg-red-500',
       };
-    case 'Hospitalization':
+    case 'Hospitalización':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +181,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
         ),
         color: 'bg-purple-500',
       };
-    case 'Life Event':
+    case 'Evento Vital':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +190,7 @@ function getEventStyle(eventType: TimelineEventType['event_type']): {
         ),
         color: 'bg-orange-500',
       };
-    case 'History Update':
+    case 'Actualización de Historia':
       return {
         icon: (
           <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

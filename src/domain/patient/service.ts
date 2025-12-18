@@ -1,5 +1,6 @@
 import { PatientRepository } from '../../data/patient/repository';
 import { prisma } from '../../lib/prisma';
+import { emitFoundationalEvent } from '../../domain/timeline/event-emitter';
 import type {
   CreatePatientInput,
   PatientOutput,
@@ -242,6 +243,20 @@ export const PatientService = {
           isCurrent: true,
         },
       });
+
+      // Create Foundational Timeline Event
+      // Per spec: docs/21_foundational_timeline_event.md
+      // Event date is the ClinicalRecord creation date
+      const foundationalEventResult = await emitFoundationalEvent({
+        clinicalRecordId: clinicalRecord.id,
+        eventDate: clinicalRecord.createdAt,
+      });
+
+      if (!foundationalEventResult.success) {
+        console.error("Failed to emit foundational event:", foundationalEventResult.error);
+        // Note: We don't fail the transaction if event creation fails,
+        // but we log the error for debugging
+      }
 
       return patient;
     });

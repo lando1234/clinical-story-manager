@@ -8,17 +8,17 @@ import {
   getEncounterTitle,
 } from "@/types/notes";
 import { DomainError, Result, ok, err } from "@/types/errors";
-import { emitEncounterEvent } from "@/domain/timeline/event-emitter";
+import { emitNoteEvent } from "@/domain/timeline/event-emitter";
 
 /**
  * NoteService - Manages clinical notes and their lifecycle.
  *
  * Implements:
  * - Draft note creation and editing (no timeline events)
- * - Note finalization with WRITE-EVENT-ENCOUNTER emission
+ * - Note finalization with WRITE-EVENT-NOTE emission
  * - Addendum creation for corrections (CORRECT-NOTE-ADDENDUM)
  *
- * See: docs/14_timeline_contracts.md
+ * See: docs/14_timeline_contracts.md, docs/22_nota_clinica_evento_note.md
  */
 
 /**
@@ -126,12 +126,12 @@ export async function updateDraftNote(
 }
 
 /**
- * Finalizes a draft note, making it immutable and emitting an Encounter event.
+ * Finalizes a draft note, making it immutable and emitting a NOTE event.
  *
- * Per WRITE-EVENT-ENCOUNTER contract:
+ * Per WRITE-EVENT-NOTE contract (docs/22_nota_clinica_evento_note.md):
  * - Trigger: A Note entity transitions from status=Draft to status=Finalized.
  * - Validation: encounterDate not in future, encounterType valid, subjective/assessment/plan populated.
- * - Post-Conditions: Exactly one Encounter event exists for the finalized Note.
+ * - Post-Conditions: Exactly one NOTE event exists for the finalized Note.
  */
 export async function finalizeNote(noteId: string): Promise<Result<Note>> {
   // Find the note
@@ -176,8 +176,8 @@ export async function finalizeNote(noteId: string): Promise<Result<Note>> {
     return finalizedNote;
   });
 
-  // Emit the Encounter event (outside transaction for proper error handling)
-  const eventResult = await emitEncounterEvent({
+  // Emit the NOTE event (outside transaction for proper error handling)
+  const eventResult = await emitNoteEvent({
     clinicalRecordId: note.clinicalRecordId,
     noteId: note.id,
     encounterDate: note.encounterDate,
@@ -188,7 +188,7 @@ export async function finalizeNote(noteId: string): Promise<Result<Note>> {
   if (!eventResult.success) {
     // Log error but don't fail - the note is already finalized
     // In production, this might need compensation logic
-    console.error("Failed to emit encounter event:", eventResult.error);
+    console.error("Failed to emit NOTE event:", eventResult.error);
   }
 
   return ok(result);

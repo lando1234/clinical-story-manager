@@ -19,7 +19,7 @@ import {
   createTestDiscontinuedMedication,
   createTestPsychiatricHistory,
   createTestEvent,
-  createTestEncounterEvent,
+  createTestNoteEvent,
 } from "../utils/test-fixtures";
 import {
   daysAgo,
@@ -302,11 +302,11 @@ describe("Historical Integrity Invariants", () => {
       });
 
       // Create event linked to note
-      const event = await createTestEncounterEvent(
+      const event = await createTestNoteEvent(
         clinicalRecord.id,
         note.id,
         daysAgo(5),
-        "Encounter"
+        "Nota clínica"
       );
 
       // Retrieve source - should include note with addenda

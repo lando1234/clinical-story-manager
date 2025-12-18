@@ -273,7 +273,7 @@ describe("Temporal Invariants", () => {
       const sameDate = daysAgo(5);
       const sameRecordedAt = new Date("2024-01-01T10:00:00Z");
 
-      // Encounter has priority 1, MedicationStart has priority 2
+      // NOTE has priority 1, MedicationStart has priority 2
       const medicationEvent = await createTestEvent({
         clinicalRecordId: clinicalRecord.id,
         eventDate: sameDate,
@@ -282,11 +282,11 @@ describe("Temporal Invariants", () => {
         recordedAt: sameRecordedAt,
       });
 
-      const encounterEvent = await createTestEvent({
+      const noteEvent = await createTestEvent({
         clinicalRecordId: clinicalRecord.id,
         eventDate: sameDate,
-        eventType: ClinicalEventType.Encounter,
-        title: "Encounter Event",
+        eventType: ClinicalEventType.NOTE,
+        title: "Nota clínica",
         recordedAt: sameRecordedAt,
       });
 
@@ -294,8 +294,8 @@ describe("Temporal Invariants", () => {
       const timeline = assertResultOk(result);
 
       const ids = timeline.events.map((e) => e.eventIdentifier);
-      // Encounter (priority 1) should come before MedicationStart (priority 2)
-      expect(ids.indexOf(encounterEvent.id)).toBeLessThan(ids.indexOf(medicationEvent.id));
+      // NOTE (priority 1) should come before MedicationStart (priority 2)
+      expect(ids.indexOf(noteEvent.id)).toBeLessThan(ids.indexOf(medicationEvent.id));
     });
 
     it("uses event_identifier as final tiebreaker (tier 4)", async () => {

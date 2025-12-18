@@ -31,17 +31,13 @@ export async function POST(
       );
     }
 
-    if (!body.discontinuationReason || typeof body.discontinuationReason !== 'string') {
-      return NextResponse.json(
-        { error: 'discontinuationReason is required' },
-        { status: 400 }
-      );
-    }
+    // Motivo es opcional según specs
+    const discontinuationReason = body.discontinuationReason?.trim() || '';
 
     const result = await stopMedication({
       medicationId,
       endDate,
-      discontinuationReason: body.discontinuationReason,
+      discontinuationReason: discontinuationReason || 'Suspensión de medicamento',
     });
 
     if (!result.success) {

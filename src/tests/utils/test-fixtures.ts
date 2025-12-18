@@ -23,8 +23,8 @@ import {
   SourceType,
   AppointmentType,
   AppointmentStatus,
+  Prisma,
 } from "@/generated/prisma";
-import { Decimal } from "@/generated/prisma/runtime/library";
 
 // =============================================================================
 // PATIENT FIXTURES
@@ -214,7 +214,7 @@ export interface CreateMedicationOptions {
   id?: string;
   clinicalRecordId: string;
   drugName?: string;
-  dosage?: number | Decimal;
+  dosage?: number | Prisma.Decimal;
   dosageUnit?: string;
   frequency?: string;
   route?: string;
@@ -315,9 +315,10 @@ export async function createTestEvent(
 }
 
 /**
- * Creates an encounter event linked to a note.
+ * Creates a NOTE event linked to a note.
+ * Per spec: docs/22_nota_clinica_evento_note.md
  */
-export async function createTestEncounterEvent(
+export async function createTestNoteEvent(
   clinicalRecordId: string,
   noteId: string,
   encounterDate: Date,
@@ -326,12 +327,24 @@ export async function createTestEncounterEvent(
   return createTestEvent({
     clinicalRecordId,
     eventDate: encounterDate,
-    eventType: ClinicalEventType.Encounter,
-    title: title ?? "Clinical Encounter",
+    eventType: ClinicalEventType.NOTE,
+    title: title ?? "Nota clínica",
     sourceType: SourceType.Note,
     sourceId: noteId,
     noteId,
   });
+}
+
+/**
+ * @deprecated Use createTestNoteEvent instead. Encounter events no longer exist.
+ */
+export async function createTestEncounterEvent(
+  clinicalRecordId: string,
+  noteId: string,
+  encounterDate: Date,
+  title?: string
+): Promise<ClinicalEvent> {
+  return createTestNoteEvent(clinicalRecordId, noteId, encounterDate, title);
 }
 
 /**

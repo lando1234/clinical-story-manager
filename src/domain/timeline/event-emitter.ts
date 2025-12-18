@@ -14,14 +14,15 @@ import { DomainError, Result, ok, err } from "@/types/errors";
  * TimelineEventEmitter - Creates ClinicalEvent records per write contracts.
  *
  * Implements:
- * - WRITE-EVENT-ENCOUNTER
+ * - WRITE-EVENT-FOUNDATIONAL
+ * - WRITE-EVENT-NOTE
  * - WRITE-EVENT-MEDICATION-START
  * - WRITE-EVENT-MEDICATION-CHANGE
  * - WRITE-EVENT-MEDICATION-STOP
  * - WRITE-EVENT-HISTORY-UPDATE
  * - WRITE-EVENT-MANUAL
  *
- * See: docs/14_timeline_contracts.md
+ * See: docs/14_timeline_contracts.md, docs/21_foundational_timeline_event.md, docs/22_nota_clinica_evento_note.md
  */
 
 /**
@@ -72,6 +73,7 @@ export async function createTimelineEvent(
       sourceId: input.sourceId,
       // Set the appropriate polymorphic reference
       noteId: input.noteId,
+      appointmentId: input.appointmentId,
       medicationId: input.medicationId,
       psychiatricHistoryId: input.psychiatricHistoryId,
       // recordedAt is set automatically via @default(now())
@@ -82,13 +84,14 @@ export async function createTimelineEvent(
 }
 
 /**
- * WRITE-EVENT-ENCOUNTER
+ * WRITE-EVENT-NOTE
  *
- * Generate an Encounter event when a Note is finalized.
+ * Generate a NOTE event when a Note is finalized.
  *
  * Trigger: A Note entity transitions from status=Draft to status=Finalized.
+ * Per spec: docs/22_nota_clinica_evento_note.md
  */
-export async function emitEncounterEvent(params: {
+export async function emitNoteEvent(params: {
   clinicalRecordId: string;
   noteId: string;
   encounterDate: Date;
@@ -98,7 +101,7 @@ export async function emitEncounterEvent(params: {
   return createTimelineEvent({
     clinicalRecordId: params.clinicalRecordId,
     eventDate: params.encounterDate,
-    eventType: ClinicalEventType.Encounter,
+    eventType: ClinicalEventType.NOTE,
     title: params.title,
     description: params.description,
     sourceType: SourceType.Note,
@@ -209,6 +212,56 @@ export async function emitHistoryUpdateEvent(params: {
     sourceType: SourceType.PsychiatricHistory,
     sourceId: params.psychiatricHistoryId,
     psychiatricHistoryId: params.psychiatricHistoryId,
+  });
+}
+
+/**
+ * WRITE-EVENT-FOUNDATIONAL
+ *
+ * Generate a Foundational event when a ClinicalRecord is created.
+ *
+ * Trigger: A ClinicalRecord entity is created.
+ * Per spec: docs/21_foundational_timeline_event.md
+ */
+export async function emitFoundationalEvent(params: {
+  clinicalRecordId: string;
+  eventDate: Date;
+}): Promise<Result<ClinicalEvent>> {
+  return createTimelineEvent({
+    clinicalRecordId: params.clinicalRecordId,
+    eventDate: params.eventDate,
+    eventType: ClinicalEventType.Foundational,
+    title: "Inicio de Historia Clínica",
+    description: "Paciente incorporado al sistema. Este evento marca el inicio formal de la historia clínica documentada.",
+    sourceType: null,
+    sourceId: null,
+  });
+}
+
+/**
+ * WRITE-EVENT-ENCOUNTER
+ *
+ * Generate an Encounter event when an appointment date has passed.
+ *
+ * Trigger: An Appointment's scheduledDate <= current date and no Encounter event exists yet.
+ * Per spec: docs/23_encounter_appointment_spec.md
+ */
+export async function emitEncounterEvent(params: {
+  clinicalRecordId: string;
+  appointmentId: string;
+  eventDate: Date;
+  title: string;
+  description?: string;
+}): Promise<Result<ClinicalEvent>> {
+  return createTimelineEvent({
+    clinicalRecordId: params.clinicalRecordId,
+    eventDate: params.eventDate,
+    eventType: ClinicalEventType.Encounter,
+    title: params.title,
+    description: params.description,
+    sourceType: SourceType.Appointment,
+    sourceId: params.appointmentId,
+    appointmentId: params.appointmentId,
   });
 }
 

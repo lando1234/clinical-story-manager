@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { ActiveMedication } from '@/types/ui';
 import { AddMedicationForm } from './AddMedicationForm';
+import { StopMedicationModal } from './StopMedicationModal';
+import { ChangeMedicationModal } from './ChangeMedicationModal';
 
 interface MedicationsPanelProps {
   medications: ActiveMedication[];
@@ -12,11 +14,23 @@ interface MedicationsPanelProps {
 /**
  * Quick access panel showing active medications
  * UX: Accessible within one interaction from patient view
+ * Per spec: docs/21_ajuste_dosis_medicamentos.md
  */
 export function MedicationsPanel({ medications }: MedicationsPanelProps) {
   const params = useParams();
   const patientId = params.id as string;
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [stopModalMedication, setStopModalMedication] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [changeModalMedication, setChangeModalMedication] = useState<{
+    id: string;
+    name: string;
+    dosage: number;
+    dosageUnit: string;
+    frequency: string;
+  } | null>(null);
 
   return (
     <>
@@ -62,41 +76,91 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
           </button>
         </div>
 
-      {medications.length === 0 ? (
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          Sin medicamentos activos
-        </p>
-      ) : (
-        <ul className="mt-3 space-y-3">
-          {medications.map((med) => (
-            <li
-              key={med.medication_identifier}
-              className="rounded-md bg-gray-50 p-3 dark:bg-gray-700/50"
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {med.drug_name}
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {med.dosage} {med.dosage_unit}
-                </span>
-              </div>
-              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {med.frequency}
-              </div>
-              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                Inicio {formatDate(med.start_date)}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+        {medications.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            Sin medicamentos activos
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {medications.map((med) => (
+              <li
+                key={med.medication_identifier}
+                className="rounded-md bg-gray-50 p-3 dark:bg-gray-700/50"
+              >
+                <div className="flex items-baseline justify-between">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {med.drug_name}
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {med.dosage} {med.dosage_unit}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {med.frequency}
+                </div>
+                <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  Inicio {formatDate(med.start_date)}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() =>
+                      setChangeModalMedication({
+                        id: med.medication_identifier,
+                        name: med.drug_name,
+                        dosage: med.dosage,
+                        dosageUnit: med.dosage_unit,
+                        frequency: med.frequency,
+                      })
+                    }
+                    className="flex-1 rounded-md border border-yellow-300 bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 transition-colors hover:bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+                    title="Ajustar dosis"
+                  >
+                    Ajustar dosis
+                  </button>
+                  <button
+                    onClick={() =>
+                      setStopModalMedication({
+                        id: med.medication_identifier,
+                        name: med.drug_name,
+                      })
+                    }
+                    className="flex-1 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
+                    title="Suspender"
+                  >
+                    Suspender
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <AddMedicationForm
         patientId={patientId}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
       />
+      {stopModalMedication && (
+        <StopMedicationModal
+          patientId={patientId}
+          medicationId={stopModalMedication.id}
+          drugName={stopModalMedication.name}
+          isOpen={true}
+          onClose={() => setStopModalMedication(null)}
+        />
+      )}
+      {changeModalMedication && (
+        <ChangeMedicationModal
+          patientId={patientId}
+          medicationId={changeModalMedication.id}
+          drugName={changeModalMedication.name}
+          currentDosage={changeModalMedication.dosage}
+          currentDosageUnit={changeModalMedication.dosageUnit}
+          currentFrequency={changeModalMedication.frequency}
+          isOpen={true}
+          onClose={() => setChangeModalMedication(null)}
+        />
+      )}
     </>
   );
 }

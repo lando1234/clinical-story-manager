@@ -8,7 +8,8 @@ interface RouteParams {
 /**
  * POST /api/patients/:id/notes/:noteId/finalize
  * Finalize a draft note, making it immutable.
- * This emits an Encounter event on the timeline.
+ * This emits a NOTE event on the timeline.
+ * Per spec: docs/22_nota_clinica_evento_note.md
  */
 export async function POST(
   request: NextRequest,

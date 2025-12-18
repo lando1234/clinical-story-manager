@@ -19,6 +19,7 @@ import {
 } from "@/generated/prisma";
 import { DomainError, Result, ok, err } from "@/types/errors";
 import { EVENT_TYPE_PRIORITY } from "@/types/timeline";
+import { ensureEncounterEventsForPatient } from "@/domain/appointments/encounter-event-generator";
 import {
   TimelineDirection,
   TimelineEvent,
@@ -28,6 +29,7 @@ import {
   SingleEventResult,
   EventSourceResult,
   NoteSourceData,
+  AppointmentSourceData,
   MedicationSourceData,
   PsychiatricHistorySourceData,
   PsychiatricHistoryContent,
@@ -154,9 +156,26 @@ export async function getFullTimeline(
     );
   }
 
+  // Ensure Encounter events exist for past appointments
+  await ensureEncounterEventsForPatient(patientId);
+
+  // Get current date for filtering future Encounter events
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // End of today
+
   // Fetch all events with basic DB ordering (will refine with stable sort)
+  // Filter: Exclude Encounter events with future dates
   const events = await prisma.clinicalEvent.findMany({
-    where: { clinicalRecordId: record.clinicalRecordId },
+    where: {
+      clinicalRecordId: record.clinicalRecordId,
+      OR: [
+        { eventType: { not: ClinicalEventType.Encounter } },
+        {
+          eventType: ClinicalEventType.Encounter,
+          eventDate: { lte: today },
+        },
+      ],
+    },
     orderBy: [
       { eventDate: "asc" },
       { recordedAt: "asc" },
@@ -242,27 +261,91 @@ export async function getFilteredTimeline(
     );
   }
 
-  // Build where clause
-  const whereClause: {
-    clinicalRecordId: string;
-    eventType?: { in: ClinicalEventType[] };
-    eventDate?: { gte?: Date; lte?: Date };
-  } = {
-    clinicalRecordId: record.clinicalRecordId,
-  };
+  // Ensure Encounter events exist for past appointments
+  await ensureEncounterEventsForPatient(patientId);
 
+  // Get current date for filtering future Encounter events
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // End of today
+
+  // Build base where clause
+  const baseConditions: any[] = [
+    // Include all non-Encounter events
+    { eventType: { not: ClinicalEventType.Encounter } },
+    // Include Encounter events only if date has passed
+    {
+      eventType: ClinicalEventType.Encounter,
+      eventDate: { lte: today },
+    },
+  ];
+
+  // Apply event type filter if provided
   if (eventTypes && eventTypes.length > 0) {
-    whereClause.eventType = { in: eventTypes };
+    const hasEncounter = eventTypes.includes(ClinicalEventType.Encounter);
+    const otherTypes = eventTypes.filter((t) => t !== ClinicalEventType.Encounter);
+
+    if (hasEncounter && otherTypes.length > 0) {
+      // Filter: Include other types OR Encounter (past only)
+      baseConditions[0] = { eventType: { in: otherTypes } };
+      baseConditions[1] = {
+        eventType: ClinicalEventType.Encounter,
+        eventDate: { lte: today },
+      };
+    } else if (hasEncounter) {
+      // Only Encounter events (past only)
+      baseConditions[0] = {
+        eventType: ClinicalEventType.Encounter,
+        eventDate: { lte: today },
+      };
+      baseConditions.pop(); // Remove second condition
+    } else {
+      // Only other types
+      baseConditions[0] = { eventType: { in: otherTypes } };
+      baseConditions.pop(); // Remove Encounter condition
+    }
   }
 
+  // Build where clause
+  const whereClause: any = {
+    clinicalRecordId: record.clinicalRecordId,
+    OR: baseConditions,
+  };
+
+  // Apply date range filter - need to combine with Encounter date filter
   if (dateRangeStart || dateRangeEnd) {
-    whereClause.eventDate = {};
+    // For Encounter events, we need to ensure they're not in the future
+    // and also respect the date range filter
+    const encounterDateFilter: any = { lte: today };
     if (dateRangeStart) {
-      whereClause.eventDate.gte = dateRangeStart;
+      encounterDateFilter.gte = dateRangeStart;
     }
     if (dateRangeEnd) {
-      whereClause.eventDate.lte = dateRangeEnd;
+      encounterDateFilter.lte = dateRangeEnd < today ? dateRangeEnd : today;
     }
+
+    // For other events, apply date range normally
+    const otherDateFilter: any = {};
+    if (dateRangeStart) {
+      otherDateFilter.gte = dateRangeStart;
+    }
+    if (dateRangeEnd) {
+      otherDateFilter.lte = dateRangeEnd;
+    }
+
+    // Update base conditions to include date filters
+    baseConditions.forEach((condition, index) => {
+      if (condition.eventType === ClinicalEventType.Encounter) {
+        baseConditions[index] = {
+          ...condition,
+          eventDate: encounterDateFilter,
+        };
+      } else if (Object.keys(otherDateFilter).length > 0) {
+        baseConditions[index] = {
+          ...condition,
+          eventDate: otherDateFilter,
+        };
+      }
+    });
   }
 
   // Fetch filtered events
@@ -406,6 +489,38 @@ export async function getEventSource(
     return ok({
       sourceType: null,
       message: "This event has no source entity",
+    });
+  }
+
+  // Handle Appointment source
+  if (event.sourceType === SourceType.Appointment) {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: event.appointmentId! },
+    });
+
+    if (!appointment) {
+      return err(
+        new DomainError(
+          "SOURCE_UNAVAILABLE",
+          `Source appointment ${event.appointmentId} is unavailable`,
+          { eventId, sourceType: "Appointment", sourceId: event.appointmentId }
+        )
+      );
+    }
+
+    const appointmentData: AppointmentSourceData = {
+      appointmentIdentifier: appointment.id,
+      scheduledDate: appointment.scheduledDate,
+      scheduledTime: appointment.scheduledTime,
+      durationMinutes: appointment.durationMinutes,
+      appointmentType: appointment.appointmentType,
+      status: appointment.status,
+      notes: appointment.notes,
+    };
+
+    return ok({
+      sourceType: "Appointment",
+      appointment: appointmentData,
     });
   }
 

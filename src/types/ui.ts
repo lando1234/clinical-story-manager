@@ -8,14 +8,15 @@
 // === Enumerations ===
 
 export type EventType =
-  | 'Encounter'
-  | 'Medication Start'
-  | 'Medication Change'
-  | 'Medication Stop'
-  | 'Hospitalization'
-  | 'Life Event'
-  | 'History Update'
-  | 'Other';
+  | 'Inicio de Historia Clínica'
+  | 'Encuentro'
+  | 'Inicio de Medicación'
+  | 'Cambio de Medicación'
+  | 'Suspensión de Medicación'
+  | 'Hospitalización'
+  | 'Evento Vital'
+  | 'Actualización de Historia'
+  | 'Otro';
 
 export type SourceType = 'Note' | 'Medication' | 'PsychiatricHistory' | null;
 

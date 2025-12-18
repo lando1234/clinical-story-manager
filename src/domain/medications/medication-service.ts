@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Medication, MedicationStatus } from "@/generated/prisma";
-import { Decimal } from "@/generated/prisma/runtime/library";
+import { Medication, MedicationStatus, Prisma } from "@/generated/prisma";
 import {
   StartMedicationInput,
   ChangeMedicationInput,
@@ -75,7 +74,7 @@ export async function startMedication(
     data: {
       clinicalRecordId: input.clinicalRecordId,
       drugName: input.drugName,
-      dosage: new Decimal(input.dosage),
+      dosage: new Prisma.Decimal(input.dosage),
       dosageUnit: input.dosageUnit,
       frequency: input.frequency,
       route: input.route,
@@ -180,12 +179,15 @@ export async function changeMedication(
   // Use transaction to ensure atomicity
   const result = await prisma.$transaction(async (tx) => {
     // Discontinue the current medication
+    // Per spec: changeReason is optional
+    const reason = input.changeReason?.trim() || 'Ajuste de dosis';
+    
     await tx.medication.update({
       where: { id: input.medicationId },
       data: {
         status: MedicationStatus.Discontinued,
         endDate: endDate,
-        discontinuationReason: input.changeReason || "Dosage changed",
+        discontinuationReason: reason,
       },
     });
 
@@ -194,7 +196,7 @@ export async function changeMedication(
       data: {
         clinicalRecordId: currentMedication.clinicalRecordId,
         drugName: currentMedication.drugName,
-        dosage: new Decimal(input.newDosage),
+        dosage: new Prisma.Decimal(input.newDosage),
         dosageUnit: input.newDosageUnit ?? currentMedication.dosageUnit,
         frequency: input.newFrequency ?? currentMedication.frequency,
         route: input.newRoute ?? currentMedication.route,
@@ -209,6 +211,9 @@ export async function changeMedication(
   });
 
   // Emit the Medication Change event
+  // Per spec: changeReason is optional
+  const reason = input.changeReason?.trim() || 'Ajuste de dosis';
+  
   const eventResult = await emitMedicationChangeEvent({
     clinicalRecordId: currentMedication.clinicalRecordId,
     medicationId: result.id,
@@ -220,7 +225,7 @@ export async function changeMedication(
       input.newDosage,
       input.newDosageUnit ?? currentMedication.dosageUnit
     ),
-    description: input.changeReason,
+    description: reason,
   });
 
   if (!eventResult.success) {
@@ -281,12 +286,15 @@ export async function stopMedication(
   }
 
   // Discontinue the medication
+  // Per spec: discontinuationReason is optional, use default if not provided
+  const reason = input.discontinuationReason?.trim() || 'Suspensión de medicamento';
+  
   const discontinuedMedication = await prisma.medication.update({
     where: { id: input.medicationId },
     data: {
       status: MedicationStatus.Discontinued,
       endDate: input.endDate,
-      discontinuationReason: input.discontinuationReason,
+      discontinuationReason: reason,
     },
   });
 
@@ -296,7 +304,7 @@ export async function stopMedication(
     medicationId: medication.id,
     endDate: input.endDate,
     title: getMedicationStopTitle(medication.drugName),
-    description: input.discontinuationReason,
+    description: reason,
   });
 
   if (!eventResult.success) {

@@ -48,16 +48,17 @@ export interface NoteFinalizationRequirements {
 
 /**
  * Maps EncounterType to human-readable title for timeline events.
+ * Per spec: docs/22_nota_clinica_evento_note.md - Section 6.2
  */
 export function getEncounterTitle(encounterType: EncounterType): string {
   const titles: Record<EncounterType, string> = {
-    InitialEvaluation: "Initial evaluation encounter",
-    FollowUp: "Follow-up encounter",
-    CrisisIntervention: "Crisis intervention encounter",
-    MedicationReview: "Medication review encounter",
-    TherapySession: "Therapy session encounter",
-    PhoneConsultation: "Phone consultation encounter",
-    Other: "Clinical encounter",
+    InitialEvaluation: "Evaluación Inicial",
+    FollowUp: "Seguimiento",
+    CrisisIntervention: "Intervención en Crisis",
+    MedicationReview: "Revisión de Medicación",
+    TherapySession: "Sesión de Terapia",
+    PhoneConsultation: "Consulta Telefónica",
+    Other: "Encuentro Clínico",
   };
   return titles[encounterType];
 }

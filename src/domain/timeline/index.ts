@@ -57,7 +57,7 @@ export {
   // Core event creation
   createTimelineEvent,
   // Specific event emitters per write contracts
-  emitEncounterEvent,
+  emitNoteEvent,
   emitMedicationStartEvent,
   emitMedicationChangeEvent,
   emitMedicationStopEvent,

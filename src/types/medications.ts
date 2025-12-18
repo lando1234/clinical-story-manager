@@ -1,4 +1,4 @@
-import { Decimal } from "@/generated/prisma/runtime/library";
+import { Prisma } from "@/generated/prisma";
 
 /**
  * Input for starting a new medication.
@@ -16,6 +16,7 @@ export interface StartMedicationInput {
 
 /**
  * Input for changing an existing medication (dosage/frequency adjustment).
+ * Per spec: changeReason is optional.
  */
 export interface ChangeMedicationInput {
   medicationId: string;
@@ -24,16 +25,17 @@ export interface ChangeMedicationInput {
   newFrequency?: string;
   newRoute?: string;
   effectiveDate: Date;
-  changeReason: string;
+  changeReason?: string;
 }
 
 /**
  * Input for stopping a medication.
+ * Per spec: discontinuationReason is optional.
  */
 export interface StopMedicationInput {
   medicationId: string;
   endDate: Date;
-  discontinuationReason: string;
+  discontinuationReason?: string;
 }
 
 /**
@@ -71,6 +73,7 @@ export function validateStartMedicationInput(
 
 /**
  * Validates medication stop input.
+ * Per spec: discontinuationReason is optional.
  */
 export function validateStopMedicationInput(
   input: StopMedicationInput,
@@ -84,12 +87,7 @@ export function validateStopMedicationInput(
   if (input.endDate < medication.startDate) {
     reasons.push("End date cannot be before start date");
   }
-  if (
-    !input.discontinuationReason ||
-    input.discontinuationReason.trim() === ""
-  ) {
-    reasons.push("Discontinuation reason is required");
-  }
+  // discontinuationReason is optional per spec - removed validation
 
   if (reasons.length === 0) {
     return { valid: true };
@@ -102,7 +100,7 @@ export function validateStopMedicationInput(
  */
 export function getMedicationStartTitle(
   drugName: string,
-  dosage: number | Decimal,
+  dosage: number | Prisma.Decimal,
   dosageUnit: string
 ): string {
   return `Started ${drugName} ${dosage}${dosageUnit}`;
@@ -113,9 +111,9 @@ export function getMedicationStartTitle(
  */
 export function getMedicationChangeTitle(
   drugName: string,
-  oldDosage: number | Decimal,
+  oldDosage: number | Prisma.Decimal,
   oldDosageUnit: string,
-  newDosage: number | Decimal,
+  newDosage: number | Prisma.Decimal,
   newDosageUnit: string
 ): string {
   return `Changed ${drugName} from ${oldDosage}${oldDosageUnit} to ${newDosage}${newDosageUnit}`;

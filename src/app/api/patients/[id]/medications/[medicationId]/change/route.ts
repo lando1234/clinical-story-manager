@@ -16,7 +16,7 @@ interface RouteParams {
  * - newFrequency?: string
  * - newRoute?: string
  * - effectiveDate: ISO date string (required)
- * - changeReason: string (required)
+ * - changeReason?: string (optional)
  */
 export async function POST(
   request: NextRequest,
