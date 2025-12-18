@@ -276,9 +276,9 @@ export async function emitManualEvent(params: {
   clinicalRecordId: string;
   eventDate: Date;
   eventType:
-    | ClinicalEventType.Hospitalization
-    | ClinicalEventType.LifeEvent
-    | ClinicalEventType.Other;
+    | 'Hospitalization'
+    | 'LifeEvent'
+    | 'Other';
   title: string;
   description?: string;
 }): Promise<Result<ClinicalEvent>> {

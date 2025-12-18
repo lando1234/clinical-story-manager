@@ -19,7 +19,7 @@ export type EventType =
   | 'Actualización de Historia'
   | 'Otro';
 
-export type SourceType = 'Note' | 'Medication' | 'PsychiatricHistory' | null;
+export type SourceType = 'Note' | 'Medication' | 'PsychiatricHistory' | 'Appointment' | null;
 
 export type EncounterType =
   | 'Initial Evaluation'

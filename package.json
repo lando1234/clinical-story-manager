@@ -2,7 +2,13 @@
   "name": "clinical-story-manager",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "path-to-regexp": "^6.3.0",
+    "undici": "^6.11.1",
+    "esbuild": "^0.25.0"
+  },
   "scripts": {
+    "postinstall": "node scripts/postinstall-prisma.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -27,6 +33,7 @@
     "react-dom": "19.2.1"
   },
   "devDependencies": {
+    "vercel": "^50.1.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",

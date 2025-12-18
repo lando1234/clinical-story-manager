@@ -14,6 +14,7 @@
 import { appointmentRepository, AppointmentRepository } from "./repository";
 import {
   Appointment,
+  AppointmentType,
   AppointmentErrorCode,
   AppointmentOperationResult,
   CancelAppointmentInput,
@@ -308,14 +309,14 @@ export class AppointmentService {
     scheduledDate?: Date;
     scheduledTime?: Date | null;
     durationMinutes?: number | null;
-    appointmentType?: string;
+    appointmentType?: AppointmentType;
     notes?: string | null;
   } {
     const previousValues: {
       scheduledDate?: Date;
       scheduledTime?: Date | null;
       durationMinutes?: number | null;
-      appointmentType?: string;
+      appointmentType?: AppointmentType;
       notes?: string | null;
     } = {};
 

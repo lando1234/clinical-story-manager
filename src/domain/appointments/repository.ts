@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "../../lib/prisma";
+import { Prisma } from "@/generated/prisma";
 import {
   Appointment,
   AppointmentStatus,
@@ -77,11 +78,7 @@ export class AppointmentRepository {
   async findMany(options: GetAppointmentsOptions = {}): Promise<Appointment[]> {
     const { patientId, status, fromDate, toDate, limit, offset } = options;
 
-    const where: {
-      patientId?: string;
-      status?: { in: string[] } | string;
-      scheduledDate?: { gte?: Date; lte?: Date };
-    } = {};
+    const where: Prisma.AppointmentWhereInput = {};
 
     if (patientId) {
       where.patientId = patientId;
@@ -89,9 +86,9 @@ export class AppointmentRepository {
 
     if (status) {
       if (Array.isArray(status)) {
-        where.status = { in: status };
+        where.status = { in: status as AppointmentStatus[] };
       } else {
-        where.status = status;
+        where.status = status as AppointmentStatus;
       }
     }
 
@@ -172,13 +169,7 @@ export class AppointmentRepository {
    * @returns The updated appointment
    */
   async update(id: string, input: UpdateAppointmentInput): Promise<Appointment> {
-    const data: {
-      scheduledDate?: Date;
-      scheduledTime?: Date | null;
-      durationMinutes?: number | null;
-      appointmentType?: string;
-      notes?: string | null;
-    } = {};
+    const data: Prisma.AppointmentUpdateInput = {};
 
     if (input.scheduledDate !== undefined) {
       data.scheduledDate = input.scheduledDate;
