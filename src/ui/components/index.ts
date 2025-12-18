@@ -18,3 +18,7 @@ export { TimelineEvent } from './TimelineEvent';
 export { MedicationsPanel } from './MedicationsPanel';
 export { AppointmentsPanel } from './AppointmentsPanel';
 export { NotesPanel } from './NotesPanel';
+
+// Root Statistics
+export { PatientStats } from './PatientStats';
+export { UpcomingAppointments } from './UpcomingAppointments';
