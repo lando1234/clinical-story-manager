@@ -447,6 +447,67 @@ El root puede mostrar:
 
 **Justificación:** Las estadísticas son informativas y operativas, no herramientas de análisis o gestión clínica.
 
+### 6.7 Navegación desde Vistas de Paciente al Root
+
+**Regla:** El usuario debe poder volver al inicio (`/`) desde cualquier vista asociada a un paciente.
+
+#### 6.7.1 Alcance de la Navegación
+
+La navegación a "Inicio" debe estar disponible desde:
+
+- **Vista de timeline del paciente** — La vista principal que muestra la línea de tiempo clínica del paciente
+- **Vista de nota clínica** — Tanto en estado draft como finalizada, cuando se accede a una nota individual
+- **Vista de medicación** — Cuando se visualiza información de medicamentos del paciente
+- **Vista de turnos del paciente** — Cuando se visualiza información de citas programadas del paciente
+
+**Principio de Accesibilidad:** El acceso a "Inicio" debe ser persistente y visible, no dependiendo del scroll ni de la posición en la página.
+
+#### 6.7.2 Reglas de Comportamiento
+
+La navegación a "Inicio" desde vistas de paciente debe cumplir con las siguientes reglas:
+
+| Regla | Descripción |
+|-------|-------------|
+| **No modifica estado clínico** | La navegación a "Inicio" no altera ningún estado clínico del paciente |
+| **No genera eventos** | La navegación no crea eventos de timeline ni eventos clínicos de ningún tipo |
+| **No requiere confirmación** | La navegación es inmediata, sin diálogos de confirmación ni advertencias |
+| **Navegación simple** | La navegación se realiza mediante un único clic o interacción |
+
+**Principio de No Interferencia:** La navegación a "Inicio" es una acción de navegación pura que no interfiere con el flujo clínico ni modifica datos.
+
+#### 6.7.3 Ubicación y Presentación
+
+**Ubicación del acceso a "Inicio":**
+
+- **Elemento de navegación global** — Debe estar ubicado en el encabezado o área de navegación global de la vista
+- **No como parte del contenido clínico** — No debe aparecer como parte del contenido clínico (timeline, notas, medicación, turnos)
+- **Persistente y visible** — Debe estar siempre visible, independientemente del scroll o la posición en la página
+- **No como evento ni acción clínica** — No debe presentarse como un evento de timeline ni como una acción clínica
+
+**Wording canónico:**
+
+- **Usar "Inicio"** — El texto del enlace o botón debe ser exactamente "Inicio"
+- **Prohibido "Dashboard"** — No se debe usar el término "Dashboard"
+- **Prohibido "Home"** — No se debe usar el término "Home" ni su traducción
+
+**Principio de Consistencia:** El wording debe ser consistente en todas las vistas y debe alinearse con la terminología del sistema.
+
+#### 6.7.4 Comportamiento Técnico
+
+**Comportamiento de navegación:**
+
+- **Navega al root (`/`)** — La navegación lleva al usuario al punto de entrada raíz del sistema
+- **Sin side effects** — No ejecuta acciones adicionales más allá de la navegación
+- **Funciona en todos los dispositivos** — Debe funcionar correctamente en desktop, tablet y mobile
+
+**Responsive:**
+
+- **Desktop** — Acceso visible y accesible en el encabezado
+- **Tablet** — Acceso visible y accesible, adaptado al layout de tablet
+- **Mobile** — Acceso visible y accesible, considerando las restricciones de espacio en mobile
+
+**Principio de Universalidad:** La navegación a "Inicio" debe funcionar de manera idéntica en todos los dispositivos y contextos.
+
 ---
 
 ## 7. Impacto en UX
@@ -745,7 +806,7 @@ El root presenta dos tipos de información estadística y operativa:
 
 ---
 
-*Versión del Documento: 2.0*  
+*Versión del Documento: 2.1*  
 *Estado: Final*  
 *Depende De: 01_specs.md, 02_domain.md, 18_patient_crud_specs.md, 23_encounter_appointment_spec.md*  
 *Consumido Por: Implementación de Frontend, Implementación de Routing, Diseño de UX, QA Testing*
@@ -762,3 +823,15 @@ Esta especificación actualiza la versión 1.0 que definía el root como un simp
 - El acceso a la historia clínica siempre se realiza desde la identidad del paciente
 
 La actualización amplía el propósito del root sin alterar su naturaleza fundamental como punto de entrada operativo centrado en el paciente.
+
+### Actualización 2.1
+
+La versión 2.1 agrega especificaciones explícitas para la navegación desde vistas de paciente al root:
+
+- Navegación persistente y visible desde todas las vistas asociadas a un paciente (timeline, notas, medicación, turnos)
+- Reglas claras sobre comportamiento: no modifica estado clínico, no genera eventos, no requiere confirmación
+- Wording canónico: usar "Inicio" (prohibido "Dashboard" o "Home")
+- Ubicación en navegación global, no como parte del contenido clínico
+- Funcionalidad responsive en desktop, tablet y mobile
+
+Esta actualización garantiza que el usuario siempre pueda regresar al punto de entrada operativo del sistema desde cualquier vista de paciente, mejorando la navegación y la experiencia del usuario sin interferir con el flujo clínico.

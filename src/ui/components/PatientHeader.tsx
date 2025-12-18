@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { Patient } from '@/types/ui';
 import { DeactivatePatientDialog } from './DeactivatePatientDialog';
 
@@ -129,6 +130,13 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
             </div>
           </div>
           <div className="flex items-center gap-2 lg:gap-4">
+            <Link
+              href="/"
+              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 lg:px-3 lg:text-sm"
+              title="Volver al inicio"
+            >
+              Inicio
+            </Link>
             <StatusIndicator status={patient.status} />
             {patient.status === 'Active' ? (
               <button
