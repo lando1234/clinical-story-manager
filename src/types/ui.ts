@@ -59,6 +59,10 @@ export interface Patient {
   date_of_birth: string; // Date as ISO string
   contact_phone: string | null;
   contact_email: string | null;
+  address: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  emergency_contact_relationship: string | null;
   status: PatientStatus;
   registration_date: string; // Timestamp as ISO string
 }

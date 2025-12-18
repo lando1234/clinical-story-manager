@@ -126,8 +126,6 @@ export function PatientHeader({ patient }: PatientHeaderProps) {
               <span>Fecha nac.: {formattedDOB}</span>
               <span className="text-gray-300 dark:text-gray-700">|</span>
               <span>{age} años</span>
-              <span className="text-gray-300 dark:text-gray-700">|</span>
-              <span className="font-mono text-xs">ID: {patient.id}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">

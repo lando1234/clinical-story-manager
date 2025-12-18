@@ -6,6 +6,7 @@ import { Timeline } from '@/ui/components/Timeline';
 import { MedicationsPanel } from '@/ui/components/MedicationsPanel';
 import { AppointmentsPanel } from '@/ui/components/AppointmentsPanel';
 import { NotesPanel } from '@/ui/components/NotesPanel';
+import { PatientInfoPanel } from '@/ui/components/PatientInfoPanel';
 import {
   fetchPatientForUI,
   fetchAllPatientsForUI,
@@ -63,6 +64,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
             <MedicationsPanel medications={medications} />
             <AppointmentsPanel nextAppointment={nextAppointment} />
             <NotesPanel mostRecentNote={mostRecentNote} />
+            <PatientInfoPanel patient={patient} />
           </div>
         </div>
       </div>

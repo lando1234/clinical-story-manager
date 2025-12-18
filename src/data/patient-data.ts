@@ -147,6 +147,10 @@ export async function fetchPatientForUI(patientId: string): Promise<UIPatient | 
       date_of_birth: toISODateString(patient.dateOfBirth),
       contact_phone: patient.contactPhone,
       contact_email: patient.contactEmail,
+      address: patient.address,
+      emergency_contact_name: patient.emergencyContactName,
+      emergency_contact_phone: patient.emergencyContactPhone,
+      emergency_contact_relationship: patient.emergencyContactRelationship,
       status: patient.status,
       registration_date: toISOTimestampString(patient.registrationDate),
     };
@@ -170,6 +174,10 @@ export async function fetchAllPatientsForUI(): Promise<UIPatient[]> {
     date_of_birth: toISODateString(patient.dateOfBirth),
     contact_phone: patient.contactPhone,
     contact_email: patient.contactEmail,
+    address: patient.address,
+    emergency_contact_name: patient.emergencyContactName,
+    emergency_contact_phone: patient.emergencyContactPhone,
+    emergency_contact_relationship: patient.emergencyContactRelationship,
     status: patient.status,
     registration_date: toISOTimestampString(patient.registrationDate),
   }));

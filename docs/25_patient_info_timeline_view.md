@@ -87,14 +87,24 @@ Los datos administrativos relevantes para el contexto clínico:
 - No afecta la accesibilidad de la historia clínica
 - No genera eventos cuando cambia
 
-### 2.4 Exclusiones Explícitas
+### 2.4 Estructura de Presentación
+
+La información del paciente se presenta en dos niveles:
+
+**Nivel 1 - Header Principal (siempre visible):**
+- Información esencial de identidad: nombre, edad, fecha de nacimiento, estado
+- Ubicación: Header fijo en la parte superior de la vista
+
+**Nivel 2 - Panel de Información (acceso rápido):**
+- Información administrativa completa: identificador, datos de contacto, contacto de emergencia
+- Ubicación: Panel en la columna lateral, debajo de los paneles de medicamentos, turnos y notas
+
+### 2.5 Exclusiones Explícitas
 
 La siguiente información **NO forma parte** de la información del paciente en la vista de timeline:
 
 | Información Excluida | Razón |
 |---------------------|-------|
-| **Datos de contacto** (teléfono, email, dirección) | No son relevantes para el contexto clínico en la timeline |
-| **Contacto de emergencia** | No es información de identidad del paciente |
 | **Información clínica resumida** | Pertenece a la timeline, no al contexto del paciente |
 | **Indicadores de riesgo o alertas** | Son información clínica, no identidad |
 | **Historial psiquiátrico** | Es contenido clínico, no información del paciente |
@@ -102,7 +112,7 @@ La siguiente información **NO forma parte** de la información del paciente en 
 | **Última consulta** | Es un evento de timeline, no información del paciente |
 | **Fechas de registro o actualización** | Son metadatos del sistema, no identidad |
 
-**Principio de exclusión:** Solo se incluye información que identifica al paciente y su estado operativo. Toda información clínica o de contacto queda excluida.
+**Principio de exclusión:** La información clínica pertenece a la timeline. Los metadatos del sistema no se muestran. Los datos administrativos (contacto, emergencia) se muestran en el panel de información.
 
 ---
 
@@ -150,17 +160,26 @@ La información del paciente **no depende** del scroll cronológico de la timeli
 
 ## 4. Campos Mínimos a Mostrar
 
-### 4.1 Campos Obligatorios
+### 4.1 Información en el Header Principal
 
-Los siguientes campos **DEBEN** mostrarse siempre en la vista de timeline:
+El header principal (siempre visible) muestra la información esencial de identidad:
 
-| Campo | Descripción | Formato |
-|-------|-------------|---------|
-| **Nombre completo** | Nombre legal del paciente | Texto completo tal como está registrado |
-| **Edad** | Edad actual del paciente | Número de años derivado de fecha de nacimiento |
-| **Fecha de nacimiento** | Fecha de nacimiento del paciente | Formato de fecha legible (ej: "15 de marzo de 1985") |
-| **Estado del paciente** | Estado operativo en el sistema | "Activo" o "Inactivo" |
-| **Identificador interno** | Identificador único del sistema | Identificador numérico o alfanumérico |
+| Campo | Descripción | Formato | Ubicación |
+|-------|-------------|---------|-----------|
+| **Nombre completo** | Nombre legal del paciente | Texto completo tal como está registrado | Header principal |
+| **Edad** | Edad actual del paciente | Número de años derivado de fecha de nacimiento | Header principal |
+| **Fecha de nacimiento** | Fecha de nacimiento del paciente | Formato de fecha legible (ej: "15 de marzo de 1985") | Header principal |
+| **Estado del paciente** | Estado operativo en el sistema | "Activo" o "Inactivo" | Header principal |
+
+### 4.2 Información en el Panel de Datos del Paciente
+
+Un panel separado ubicado debajo de los paneles de medicamentos, turnos y notas muestra información administrativa completa:
+
+| Campo | Descripción | Formato | Ubicación |
+|-------|-------------|---------|-----------|
+| **Identificador interno** | Identificador único del sistema | Identificador numérico o alfanumérico | Panel de información |
+| **Datos de contacto** | Teléfono, email, dirección del paciente | Texto según corresponda | Panel de información (opcional) |
+| **Contacto de emergencia** | Nombre, teléfono y relación del contacto de emergencia | Texto según corresponda | Panel de información (opcional) |
 
 ### 4.2 Cálculo de Edad
 
@@ -190,17 +209,32 @@ El estado del paciente debe mostrarse claramente:
 - **Idioma:** Español
 - **Visibilidad:** Debe ser claramente distinguible (puede usar indicadores visuales adicionales)
 
-### 4.5 Campos Opcionales (Fuera de Alcance del MVP)
+### 4.3 Ubicación del Panel de Información
 
-Los siguientes campos **NO** deben mostrarse en el MVP:
+El panel de información del paciente debe estar ubicado:
 
-- Datos de contacto (teléfono, email)
-- Dirección
-- Contacto de emergencia
+- **Debajo de los paneles de medicamentos, turnos y notas** — En la columna lateral derecha
+- **En la misma columna** que los otros paneles de acceso rápido
+- **Siempre visible** — No requiere scroll para acceder cuando los otros paneles están visibles
+
+**Estructura visual:**
+```
+Columna Lateral (1/3 ancho)
+├── Panel de Medicamentos
+├── Panel de Turnos
+├── Panel de Notas
+└── Panel de Información del Paciente ← Nueva ubicación
+```
+
+### 4.4 Campos Excluidos
+
+Los siguientes campos **NO** se muestran en ningún lugar de la vista de timeline:
+
 - Fecha de registro
 - Fechas de creación/actualización del registro
+- Metadatos del sistema
 
-**Razón:** Estos campos no son necesarios para el contexto clínico en la timeline y pueden agregarse en versiones posteriores si se requiere.
+**Razón:** Estos son metadatos técnicos, no información relevante para el contexto clínico.
 
 ---
 
@@ -304,12 +338,20 @@ La vista de timeline **integra** información de ambas fuentes:
 
 ```
 Vista de Timeline
-├── Información del Paciente (fuente: Patient)
+├── Header Principal (fuente: Patient)
 │   ├── Nombre completo
 │   ├── Edad
 │   ├── Fecha de nacimiento
-│   ├── Estado
-│   └── Identificador
+│   └── Estado
+│
+├── Columna Lateral
+│   ├── Panel de Medicamentos
+│   ├── Panel de Turnos
+│   ├── Panel de Notas
+│   └── Panel de Información del Paciente (fuente: Patient)
+│       ├── Identificador interno
+│       ├── Datos de contacto (opcional)
+│       └── Contacto de emergencia (opcional)
 │
 └── Timeline de Eventos (fuente: ClinicalRecord)
     ├── Evento 1
@@ -560,13 +602,16 @@ La información del paciente en la vista de timeline NO es:
 
 ### 11.3 Campos Obligatorios
 
-Los siguientes campos deben mostrarse siempre:
-
+**En el Header Principal:**
 1. Nombre completo
 2. Edad (calculada desde fecha de nacimiento)
 3. Fecha de nacimiento
 4. Estado del paciente (Activo/Inactivo)
+
+**En el Panel de Información:**
 5. Identificador interno
+6. Datos de contacto (si están disponibles)
+7. Contacto de emergencia (si está disponible)
 
 ### 11.4 Principios Fundamentales
 
