@@ -127,7 +127,7 @@ describe("Historical Integrity Invariants", () => {
   describe("INV-HIST-02: Discontinued Medication Immutability", () => {
     it("discontinued medication fields remain unchanged", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
-      const startDate = daysAgo(30);
+      const prescriptionIssueDate = daysAgo(30);
       const endDate = daysAgo(5);
 
       const medication = await createTestDiscontinuedMedication({
@@ -136,7 +136,7 @@ describe("Historical Integrity Invariants", () => {
         dosage: 50,
         dosageUnit: "mg",
         frequency: "once daily",
-        startDate,
+        prescriptionIssueDate,
         endDate,
         discontinuationReason: "Side effects",
       });
@@ -150,19 +150,19 @@ describe("Historical Integrity Invariants", () => {
       expect(retrieved?.dosage.toNumber()).toBe(50);
       expect(retrieved?.dosageUnit).toBe("mg");
       expect(retrieved?.frequency).toBe("once daily");
-      expect(retrieved?.startDate.toDateString()).toBe(startDate.toDateString());
+      expect(retrieved?.prescriptionIssueDate.toDateString()).toBe(prescriptionIssueDate.toDateString());
       expect(retrieved?.endDate?.toDateString()).toBe(endDate.toDateString());
       expect(retrieved?.discontinuationReason).toBe("Side effects");
       expect(retrieved?.status).toBe(MedicationStatus.Discontinued);
     });
 
-    it("discontinued medication start_date is preserved", async () => {
+    it("discontinued medication prescription_issue_date is preserved", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
-      const originalStartDate = daysAgo(60);
+      const originalPrescriptionIssueDate = daysAgo(60);
 
       const medication = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
-        startDate: originalStartDate,
+        prescriptionIssueDate: originalPrescriptionIssueDate,
         endDate: daysAgo(5),
       });
 
@@ -170,7 +170,7 @@ describe("Historical Integrity Invariants", () => {
         where: { id: medication.id },
       });
 
-      expect(retrieved?.startDate.toDateString()).toBe(originalStartDate.toDateString());
+      expect(retrieved?.prescriptionIssueDate.toDateString()).toBe(originalPrescriptionIssueDate.toDateString());
     });
 
     it("discontinued medication end_date is preserved", async () => {
@@ -179,7 +179,7 @@ describe("Historical Integrity Invariants", () => {
 
       const medication = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: originalEndDate,
       });
 
@@ -515,14 +515,14 @@ describe("Historical Integrity Invariants", () => {
       const med1 = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Sertraline",
-        startDate: daysAgo(90),
+        prescriptionIssueDate: daysAgo(90),
         endDate: daysAgo(60),
       });
 
       const med2 = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Sertraline",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(30),
         predecessorId: med1.id,
       });
@@ -530,7 +530,7 @@ describe("Historical Integrity Invariants", () => {
       const med3 = await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Sertraline",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         predecessorId: med2.id,
       });
 
@@ -564,7 +564,7 @@ describe("Historical Integrity Invariants", () => {
       const med = await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Sertraline",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         predecessorId: null,
       });
 
@@ -619,7 +619,7 @@ describe("Historical Integrity Invariants", () => {
       const discontinued = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Old Medication",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(30),
       });
 
@@ -627,7 +627,7 @@ describe("Historical Integrity Invariants", () => {
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "New Medication",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
       });
 
       // Discontinued medication should be queryable

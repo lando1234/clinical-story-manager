@@ -22,7 +22,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:db:setup": "dotenv -e .env.test -- npx prisma migrate deploy"
+    "test:db:setup": "dotenv -e .env.test -- npx prisma migrate deploy",
+    "pre-commit:build": "npm run db:generate && npm run build",
+    "pre-commit:test": "npm test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
@@ -45,6 +53,8 @@
     "dotenv-cli": "^8.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.11",
     "prisma": "^7.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",

@@ -19,6 +19,7 @@ import { DomainError, Result, ok, err } from "@/types/errors";
  * - WRITE-EVENT-MEDICATION-START
  * - WRITE-EVENT-MEDICATION-CHANGE
  * - WRITE-EVENT-MEDICATION-STOP
+ * - WRITE-EVENT-MEDICATION-PRESCRIPTION-ISSUED
  * - WRITE-EVENT-HISTORY-UPDATE
  * - WRITE-EVENT-MANUAL
  *
@@ -120,13 +121,13 @@ export async function emitNoteEvent(params: {
 export async function emitMedicationStartEvent(params: {
   clinicalRecordId: string;
   medicationId: string;
-  startDate: Date;
+  prescriptionIssueDate: Date;
   title: string;
-  description: string;
+  description?: string;
 }): Promise<Result<ClinicalEvent>> {
   return createTimelineEvent({
     clinicalRecordId: params.clinicalRecordId,
-    eventDate: params.startDate,
+    eventDate: params.prescriptionIssueDate,
     eventType: ClinicalEventType.MedicationStart,
     title: params.title,
     description: params.description,
@@ -180,6 +181,33 @@ export async function emitMedicationStopEvent(params: {
     clinicalRecordId: params.clinicalRecordId,
     eventDate: params.endDate,
     eventType: ClinicalEventType.MedicationStop,
+    title: params.title,
+    description: params.description,
+    sourceType: SourceType.Medication,
+    sourceId: params.medicationId,
+    medicationId: params.medicationId,
+  });
+}
+
+/**
+ * WRITE-EVENT-MEDICATION-PRESCRIPTION-ISSUED
+ *
+ * Generate a Medication Prescription Issued event when a new prescription is issued for an active medication.
+ *
+ * Trigger: A new prescription is issued for an active medication without modifying parameters.
+ * Per spec: docs/22_cambios_medicacion_actualizacion.md
+ */
+export async function emitMedicationPrescriptionIssuedEvent(params: {
+  clinicalRecordId: string;
+  medicationId: string;
+  prescriptionIssueDate: Date;
+  title: string;
+  description?: string;
+}): Promise<Result<ClinicalEvent>> {
+  return createTimelineEvent({
+    clinicalRecordId: params.clinicalRecordId,
+    eventDate: params.prescriptionIssueDate,
+    eventType: ClinicalEventType.MedicationPrescriptionIssued,
     title: params.title,
     description: params.description,
     sourceType: SourceType.Medication,

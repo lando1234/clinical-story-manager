@@ -9,9 +9,8 @@ export interface StartMedicationInput {
   dosage: number;
   dosageUnit: string;
   frequency: string;
-  route?: string;
-  startDate: Date;
-  prescribingReason: string;
+  prescriptionIssueDate: Date;
+  comments?: string;
 }
 
 /**
@@ -23,7 +22,6 @@ export interface ChangeMedicationInput {
   newDosage: number;
   newDosageUnit?: string;
   newFrequency?: string;
-  newRoute?: string;
   effectiveDate: Date;
   changeReason?: string;
 }
@@ -36,6 +34,16 @@ export interface StopMedicationInput {
   medicationId: string;
   endDate: Date;
   discontinuationReason?: string;
+}
+
+/**
+ * Input for issuing a new prescription for an active medication.
+ * Per spec: comments is optional.
+ */
+export interface IssuePrescriptionInput {
+  medicationId: string;
+  prescriptionIssueDate: Date;
+  comments?: string;
 }
 
 /**
@@ -58,12 +66,10 @@ export function validateStartMedicationInput(
   if (!input.frequency || input.frequency.trim() === "") {
     reasons.push("Frequency is required");
   }
-  if (input.startDate > new Date()) {
-    reasons.push("Start date cannot be in the future");
+  if (input.prescriptionIssueDate > new Date()) {
+    reasons.push("Prescription issue date cannot be in the future");
   }
-  if (!input.prescribingReason || input.prescribingReason.trim() === "") {
-    reasons.push("Prescribing reason is required");
-  }
+  // comments is optional per spec - no validation needed
 
   if (reasons.length === 0) {
     return { valid: true };
@@ -77,15 +83,15 @@ export function validateStartMedicationInput(
  */
 export function validateStopMedicationInput(
   input: StopMedicationInput,
-  medication: { startDate: Date }
+  medication: { prescriptionIssueDate: Date }
 ): { valid: true } | { valid: false; reasons: string[] } {
   const reasons: string[] = [];
 
   if (input.endDate > new Date()) {
     reasons.push("End date cannot be in the future");
   }
-  if (input.endDate < medication.startDate) {
-    reasons.push("End date cannot be before start date");
+  if (input.endDate < medication.prescriptionIssueDate) {
+    reasons.push("End date cannot be before prescription issue date");
   }
   // discontinuationReason is optional per spec - removed validation
 
@@ -124,4 +130,15 @@ export function getMedicationChangeTitle(
  */
 export function getMedicationStopTitle(drugName: string): string {
   return `Stopped ${drugName}`;
+}
+
+/**
+ * Generates medication prescription issued event title.
+ */
+export function getMedicationPrescriptionIssuedTitle(
+  drugName: string,
+  dosage: number | Prisma.Decimal,
+  dosageUnit: string
+): string {
+  return `Nueva receta emitida: ${drugName} ${dosage}${dosageUnit}`;
 }

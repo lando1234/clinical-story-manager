@@ -6,6 +6,7 @@ import type { ActiveMedication } from '@/types/ui';
 import { AddMedicationForm } from './AddMedicationForm';
 import { StopMedicationModal } from './StopMedicationModal';
 import { ChangeMedicationModal } from './ChangeMedicationModal';
+import { IssuePrescriptionModal } from './IssuePrescriptionModal';
 
 interface MedicationsPanelProps {
   medications: ActiveMedication[];
@@ -30,6 +31,13 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
     dosage: number;
     dosageUnit: string;
     frequency: string;
+  } | null>(null);
+  const [issuePrescriptionModalMedication, setIssuePrescriptionModalMedication] = useState<{
+    id: string;
+    name: string;
+    dosage: number;
+    dosageUnit: string;
+    originalPrescriptionIssueDate: Date;
   } | null>(null);
 
   return (
@@ -99,7 +107,7 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
                   {med.frequency}
                 </div>
                 <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                  Inicio {formatDate(med.start_date)}
+                  Emisión {formatDate(med.prescription_issue_date)}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -116,6 +124,21 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
                     title="Ajustar dosis"
                   >
                     Ajustar dosis
+                  </button>
+                  <button
+                    onClick={() =>
+                      setIssuePrescriptionModalMedication({
+                        id: med.medication_identifier,
+                        name: med.drug_name,
+                        dosage: med.dosage,
+                        dosageUnit: med.dosage_unit,
+                        originalPrescriptionIssueDate: new Date(med.prescription_issue_date),
+                      })
+                    }
+                    className="flex-1 rounded-md border border-blue-300 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                    title="Nueva receta emitida"
+                  >
+                    Nueva receta
                   </button>
                   <button
                     onClick={() =>
@@ -159,6 +182,18 @@ export function MedicationsPanel({ medications }: MedicationsPanelProps) {
           currentFrequency={changeModalMedication.frequency}
           isOpen={true}
           onClose={() => setChangeModalMedication(null)}
+        />
+      )}
+      {issuePrescriptionModalMedication && (
+        <IssuePrescriptionModal
+          patientId={patientId}
+          medicationId={issuePrescriptionModalMedication.id}
+          drugName={issuePrescriptionModalMedication.name}
+          dosage={issuePrescriptionModalMedication.dosage}
+          dosageUnit={issuePrescriptionModalMedication.dosageUnit}
+          originalPrescriptionIssueDate={issuePrescriptionModalMedication.originalPrescriptionIssueDate}
+          isOpen={true}
+          onClose={() => setIssuePrescriptionModalMedication(null)}
         />
       )}
     </>

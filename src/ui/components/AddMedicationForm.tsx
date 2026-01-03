@@ -14,9 +14,8 @@ interface FormData {
   dosage: string;
   dosageUnit: string;
   frequency: string;
-  route: string;
-  startDate: string;
-  prescribingReason: string;
+  prescriptionIssueDate: string;
+  comments: string;
 }
 
 interface FieldErrors {
@@ -24,8 +23,7 @@ interface FieldErrors {
   dosage?: string;
   dosageUnit?: string;
   frequency?: string;
-  startDate?: string;
-  prescribingReason?: string;
+  prescriptionIssueDate?: string;
 }
 
 /**
@@ -48,9 +46,8 @@ export function AddMedicationForm({
     dosage: '',
     dosageUnit: 'mg',
     frequency: '',
-    route: '',
-    startDate: new Date().toISOString().split('T')[0],
-    prescribingReason: '',
+    prescriptionIssueDate: new Date().toISOString().split('T')[0],
+    comments: '',
   });
 
   if (!isOpen) {
@@ -77,20 +74,18 @@ export function AddMedicationForm({
       errors.frequency = 'La frecuencia es requerida';
     }
 
-    if (!formData.startDate) {
-      errors.startDate = 'La fecha de inicio es requerida';
+    if (!formData.prescriptionIssueDate) {
+      errors.prescriptionIssueDate = 'La fecha de emisión de receta es requerida';
     } else {
-      const startDate = new Date(formData.startDate);
+      const prescriptionIssueDate = new Date(formData.prescriptionIssueDate);
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-      if (startDate > today) {
-        errors.startDate = 'La fecha de inicio no puede ser futura';
+      if (prescriptionIssueDate > today) {
+        errors.prescriptionIssueDate = 'La fecha de emisión de receta no puede ser futura';
       }
     }
 
-    if (!formData.prescribingReason || formData.prescribingReason.trim().length === 0) {
-      errors.prescribingReason = 'La razón de prescripción es requerida';
-    }
+    // comments is optional - no validation needed
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -117,9 +112,8 @@ export function AddMedicationForm({
           dosage: parseFloat(formData.dosage),
           dosageUnit: formData.dosageUnit.trim(),
           frequency: formData.frequency.trim(),
-          route: formData.route.trim() || undefined,
-          startDate: formData.startDate,
-          prescribingReason: formData.prescribingReason.trim(),
+          prescriptionIssueDate: formData.prescriptionIssueDate,
+          comments: formData.comments.trim() || undefined,
         }),
       });
 
@@ -138,9 +132,8 @@ export function AddMedicationForm({
         dosage: '',
         dosageUnit: 'mg',
         frequency: '',
-        route: '',
-        startDate: new Date().toISOString().split('T')[0],
-        prescribingReason: '',
+        prescriptionIssueDate: new Date().toISOString().split('T')[0],
+        comments: '',
       });
       setFieldErrors({});
     } catch (err) {
@@ -313,84 +306,55 @@ export function AddMedicationForm({
             )}
           </div>
 
-          {/* Route */}
+          {/* Prescription Issue Date */}
           <div>
             <label
-              htmlFor="route"
+              htmlFor="prescriptionIssueDate"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Vía de Administración
-            </label>
-            <input
-              type="text"
-              id="route"
-              value={formData.route}
-              onChange={(e) =>
-                setFormData({ ...formData, route: e.target.value })
-              }
-              placeholder="ej: oral, intravenosa"
-              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              disabled={isSubmitting}
-            />
-          </div>
-
-          {/* Start Date */}
-          <div>
-            <label
-              htmlFor="startDate"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Fecha de Inicio <span className="text-red-500">*</span>
+              Fecha de Emisión de Receta <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
-              id="startDate"
-              value={formData.startDate}
+              id="prescriptionIssueDate"
+              value={formData.prescriptionIssueDate}
               onChange={(e) =>
-                setFormData({ ...formData, startDate: e.target.value })
+                setFormData({ ...formData, prescriptionIssueDate: e.target.value })
               }
               max={new Date().toISOString().split('T')[0]}
               className={`mt-1 block w-full rounded-md border ${
-                fieldErrors.startDate
+                fieldErrors.prescriptionIssueDate
                   ? 'border-red-300 dark:border-red-700'
                   : 'border-gray-300 dark:border-gray-600'
               } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
               disabled={isSubmitting}
             />
-            {fieldErrors.startDate && (
+            {fieldErrors.prescriptionIssueDate && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {fieldErrors.startDate}
+                {fieldErrors.prescriptionIssueDate}
               </p>
             )}
           </div>
 
-          {/* Prescribing Reason */}
+          {/* Comments */}
           <div>
             <label
-              htmlFor="prescribingReason"
+              htmlFor="comments"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Razón de Prescripción <span className="text-red-500">*</span>
+              Comentarios
             </label>
             <textarea
-              id="prescribingReason"
+              id="comments"
               rows={3}
-              value={formData.prescribingReason}
+              value={formData.comments}
               onChange={(e) =>
-                setFormData({ ...formData, prescribingReason: e.target.value })
+                setFormData({ ...formData, comments: e.target.value })
               }
-              className={`mt-1 block w-full rounded-md border ${
-                fieldErrors.prescribingReason
-                  ? 'border-red-300 dark:border-red-700'
-                  : 'border-gray-300 dark:border-gray-600'
-              } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
+              placeholder="Comentarios opcionales sobre la prescripción"
+              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               disabled={isSubmitting}
             />
-            {fieldErrors.prescribingReason && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {fieldErrors.prescribingReason}
-              </p>
-            )}
           </div>
 
           {submitError && (

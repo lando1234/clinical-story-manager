@@ -49,13 +49,13 @@ describe("Clinical State Invariants", () => {
   // INV-STATE-01: Active medications are consistent with lifecycle events
   // ===========================================================================
   describe("INV-STATE-01: Active Medication Derivation", () => {
-    it("medication is active when start_date <= today and end_date is null", async () => {
+    it("medication is active when prescription_issue_date <= today and end_date is null", async () => {
       const { patient, clinicalRecord } = await createCompletePatientSetup();
 
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Active Med",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         endDate: null,
         status: MedicationStatus.Active,
       });
@@ -73,7 +73,7 @@ describe("Clinical State Invariants", () => {
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Stopped Med",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(10),
       });
 
@@ -91,7 +91,7 @@ describe("Clinical State Invariants", () => {
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Past Med",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(30),
       });
 
@@ -103,13 +103,13 @@ describe("Clinical State Invariants", () => {
       expect(found).toBeDefined();
     });
 
-    it("historical state excludes medication before its start_date", async () => {
+    it("historical state excludes medication before its prescription_issue_date", async () => {
       const { patient, clinicalRecord } = await createCompletePatientSetup();
 
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Started Later",
-        startDate: daysAgo(10),
+        prescriptionIssueDate: daysAgo(10),
         status: MedicationStatus.Active,
       });
 
@@ -128,21 +128,21 @@ describe("Clinical State Invariants", () => {
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Active 1",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         status: MedicationStatus.Active,
       });
 
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Active 2",
-        startDate: daysAgo(15),
+        prescriptionIssueDate: daysAgo(15),
         status: MedicationStatus.Active,
       });
 
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Discontinued",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(20),
       });
 
@@ -171,7 +171,7 @@ describe("Clinical State Invariants", () => {
       const activeMed = await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Active Med",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         endDate: null,
         status: MedicationStatus.Active,
       });
@@ -187,7 +187,7 @@ describe("Clinical State Invariants", () => {
       const discontinuedMed = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Discontinued Med",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate,
       });
 
@@ -203,14 +203,14 @@ describe("Clinical State Invariants", () => {
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Active 1",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
         status: MedicationStatus.Active,
       });
 
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Discontinued 1",
-        startDate: daysAgo(90),
+        prescriptionIssueDate: daysAgo(90),
         endDate: daysAgo(60),
       });
 
@@ -239,54 +239,54 @@ describe("Clinical State Invariants", () => {
   // INV-STATE-03: Medication end date is on or after start date
   // ===========================================================================
   describe("INV-STATE-03: Valid Medication Date Range", () => {
-    it("end_date >= start_date is valid", async () => {
+    it("end_date >= prescription_issue_date is valid", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
-      const startDate = daysAgo(30);
+      const prescriptionIssueDate = daysAgo(30);
       const endDate = daysAgo(10);
 
       const med = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
-        startDate,
+        prescriptionIssueDate,
         endDate,
       });
 
-      expect(med.endDate!.getTime()).toBeGreaterThanOrEqual(med.startDate.getTime());
+      expect(med.endDate!.getTime()).toBeGreaterThanOrEqual(med.prescriptionIssueDate.getTime());
     });
 
-    it("same-day start and stop is valid (zero-duration)", async () => {
+    it("same-day prescription issue and stop is valid (zero-duration)", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
       const sameDay = daysAgo(10);
 
       const med = await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
-        startDate: sameDay,
+        prescriptionIssueDate: sameDay,
         endDate: sameDay,
       });
 
-      expect(med.startDate.toDateString()).toBe(med.endDate!.toDateString());
+      expect(med.prescriptionIssueDate.toDateString()).toBe(med.endDate!.toDateString());
     });
 
-    it("all medications satisfy end_date >= start_date", async () => {
+    it("all medications satisfy end_date >= prescription_issue_date", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
       // Create multiple medications
       await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Med 1",
-        startDate: daysAgo(30),
+        prescriptionIssueDate: daysAgo(30),
       });
 
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Med 2",
-        startDate: daysAgo(60),
+        prescriptionIssueDate: daysAgo(60),
         endDate: daysAgo(30),
       });
 
       await createTestDiscontinuedMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Med 3 Same Day",
-        startDate: daysAgo(20),
+        prescriptionIssueDate: daysAgo(20),
         endDate: daysAgo(20),
       });
 
@@ -297,7 +297,7 @@ describe("Clinical State Invariants", () => {
 
       for (const med of allMeds) {
         if (med.endDate !== null) {
-          expect(med.endDate.getTime()).toBeGreaterThanOrEqual(med.startDate.getTime());
+          expect(med.endDate.getTime()).toBeGreaterThanOrEqual(med.prescriptionIssueDate.getTime());
         }
       }
     });

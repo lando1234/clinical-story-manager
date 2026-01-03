@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { startMedication } from '@/domain/medications/medication-service';
+import { issuePrescription } from '@/domain/medications/medication-service';
 import { getClinicalRecordForPatient } from '@/lib/api-helpers';
 
 interface RouteParams {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; medicationId: string }>;
 }
 
 /**
- * POST /api/patients/:id/medications
- * Start a new medication for a patient.
- * This emits a MedicationStart event on the timeline.
+ * POST /api/patients/:id/medications/:medicationId/issue-prescription
+ * Issue a new prescription for an active medication.
+ * This emits a MedicationPrescriptionIssued event on the timeline.
  *
  * Request body:
- * - drugName: string (required)
- * - dosage: number (required, positive)
- * - dosageUnit: string (required)
- * - frequency: string (required)
  * - prescriptionIssueDate: ISO date string (required)
  * - comments?: string (optional)
  */
@@ -24,17 +20,8 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
-    const { id: patientId } = await params;
+    const { medicationId } = await params;
     const body = await request.json();
-
-    // Resolve clinical record ID
-    const clinicalRecordId = await getClinicalRecordForPatient(patientId);
-    if (!clinicalRecordId) {
-      return NextResponse.json(
-        { error: `Patient ${patientId} not found or has no clinical record` },
-        { status: 404 }
-      );
-    }
 
     // Parse prescription issue date
     const prescriptionIssueDate = body.prescriptionIssueDate ? new Date(body.prescriptionIssueDate) : undefined;
@@ -45,29 +32,27 @@ export async function POST(
       );
     }
 
-    const result = await startMedication({
-      clinicalRecordId,
-      drugName: body.drugName,
-      dosage: body.dosage,
-      dosageUnit: body.dosageUnit,
-      frequency: body.frequency,
+    const result = await issuePrescription({
+      medicationId,
       prescriptionIssueDate,
       comments: body.comments,
     });
 
     if (!result.success) {
+      const status = result.error.code === 'MEDICATION_NOT_FOUND' ? 404 : 400;
       return NextResponse.json(
         { error: result.error.message },
-        { status: 400 }
+        { status }
       );
     }
 
     return NextResponse.json(result.data, { status: 201 });
   } catch (error) {
-    console.error('Error starting medication:', error);
+    console.error('Error issuing prescription:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
+

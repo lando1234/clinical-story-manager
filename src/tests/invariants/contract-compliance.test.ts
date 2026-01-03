@@ -293,7 +293,7 @@ describe("Contract Compliance Invariants", () => {
       const medication = await createTestMedication({
         clinicalRecordId: clinicalRecord.id,
         drugName: "Immediate Visibility Med",
-        startDate: daysAgo(5),
+        prescriptionIssueDate: daysAgo(5),
       });
 
       // Immediately query current state

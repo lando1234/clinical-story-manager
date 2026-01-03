@@ -75,8 +75,8 @@ export interface ActiveMedication {
   dosage: number;
   dosage_unit: string;
   frequency: string;
-  start_date: string; // Date as ISO string
-  prescribing_reason: string;
+  prescription_issue_date: string; // Date as ISO string
+  comments: string | null;
 }
 
 // === Note (from READ-EVENT-SOURCE contract) ===

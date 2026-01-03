@@ -64,6 +64,7 @@ enum ClinicalEventType {
   MedicationStart
   MedicationChange
   MedicationStop
+  MedicationPrescriptionIssued
   Hospitalization
   LifeEvent
   HistoryUpdate
@@ -201,10 +202,9 @@ model Medication {
   dosage                Decimal          @db.Decimal(10, 2)
   dosageUnit            String           @map("dosage_unit")
   frequency             String
-  route                 String?
-  startDate             DateTime         @map("start_date") @db.Date
+  prescriptionIssueDate DateTime         @map("prescription_issue_date") @db.Date
   endDate               DateTime?        @map("end_date") @db.Date
-  prescribingReason     String           @map("prescribing_reason")
+  comments              String?          @map("comments")
   discontinuationReason String?          @map("discontinuation_reason")
   status                MedicationStatus @default(Active)
   predecessorId         String?          @map("predecessor_id")

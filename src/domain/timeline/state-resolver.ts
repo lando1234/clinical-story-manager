@@ -126,7 +126,7 @@ export async function getCurrentState(
       clinicalRecordId: record.clinicalRecordId,
       status: MedicationStatus.Active,
     },
-    orderBy: { startDate: "desc" },
+    orderBy: { prescriptionIssueDate: "desc" },
   });
 
   // Fetch current psychiatric history (isCurrent = true)
@@ -165,8 +165,8 @@ export async function getCurrentState(
     dosage: med.dosage,
     dosageUnit: med.dosageUnit,
     frequency: med.frequency,
-    startDate: med.startDate,
-    prescribingReason: med.prescribingReason,
+    prescriptionIssueDate: med.prescriptionIssueDate,
+    comments: med.comments,
   }));
 
   const currentHistoryData: CurrentPsychiatricHistory = {
@@ -203,7 +203,7 @@ export async function getCurrentState(
  *
  * Per contract READ-STATE-HISTORICAL:
  * - Events: eventDate <= targetDate
- * - Medications: startDate <= targetDate AND (endDate IS NULL OR endDate > targetDate)
+ * - Medications: prescriptionIssueDate <= targetDate AND (endDate IS NULL OR endDate > targetDate)
  * - Psychiatric history: createdAt <= targetDate AND (supersededAt IS NULL OR supersededAt > targetDate)
  *
  * @param patientId - Unique identifier of the patient
@@ -264,17 +264,17 @@ export async function getHistoricalState(
   });
 
   // Fetch medications active on target date
-  // Per contract: startDate <= targetDate AND (endDate IS NULL OR endDate > targetDate)
+  // Per contract: prescriptionIssueDate <= targetDate AND (endDate IS NULL OR endDate > targetDate)
   const activeMedications = await prisma.medication.findMany({
     where: {
       clinicalRecordId: record.clinicalRecordId,
-      startDate: { lte: targetDateEnd },
+      prescriptionIssueDate: { lte: targetDateEnd },
       OR: [
         { endDate: null },
         { endDate: { gt: targetDateEnd } },
       ],
     },
-    orderBy: { startDate: "desc" },
+    orderBy: { prescriptionIssueDate: "desc" },
   });
 
   // Fetch psychiatric history version that was current on target date
@@ -305,7 +305,7 @@ export async function getHistoricalState(
     dosage: med.dosage,
     dosageUnit: med.dosageUnit,
     frequency: med.frequency,
-    startDate: med.startDate,
+    prescriptionIssueDate: med.prescriptionIssueDate,
   }));
 
   const historicalHistoryData: HistoricalPsychiatricHistory | null = historicalHistory

@@ -234,8 +234,8 @@ export async function fetchActiveMedicationsForUI(
     dosage: Number(med.dosage),
     dosage_unit: med.dosageUnit,
     frequency: med.frequency,
-    start_date: toISODateString(med.startDate),
-    prescribing_reason: med.prescribingReason,
+    prescription_issue_date: toISODateString(med.prescriptionIssueDate),
+    comments: med.comments,
   }));
 }
 

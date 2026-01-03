@@ -14,7 +14,6 @@ interface RouteParams {
  * - newDosage: number (required, positive)
  * - newDosageUnit?: string
  * - newFrequency?: string
- * - newRoute?: string
  * - effectiveDate: ISO date string (required)
  * - changeReason?: string (optional)
  */
@@ -40,7 +39,6 @@ export async function POST(
       newDosage: body.newDosage,
       newDosageUnit: body.newDosageUnit,
       newFrequency: body.newFrequency,
-      newRoute: body.newRoute,
       effectiveDate,
       changeReason: body.changeReason,
     });

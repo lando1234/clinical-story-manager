@@ -1,20 +1,23 @@
 import { prisma } from "@/lib/prisma";
-import { Medication, MedicationStatus, Prisma } from "@/generated/prisma";
+import { Medication, MedicationStatus, ClinicalEvent, Prisma } from "@/generated/prisma";
 import {
   StartMedicationInput,
   ChangeMedicationInput,
   StopMedicationInput,
+  IssuePrescriptionInput,
   validateStartMedicationInput,
   validateStopMedicationInput,
   getMedicationStartTitle,
   getMedicationChangeTitle,
   getMedicationStopTitle,
+  getMedicationPrescriptionIssuedTitle,
 } from "@/types/medications";
 import { DomainError, Result, ok, err } from "@/types/errors";
 import {
   emitMedicationStartEvent,
   emitMedicationChangeEvent,
   emitMedicationStopEvent,
+  emitMedicationPrescriptionIssuedEvent,
 } from "@/domain/timeline/event-emitter";
 
 /**
@@ -37,7 +40,7 @@ import {
  *
  * Per WRITE-EVENT-MEDICATION-START contract:
  * - Trigger: A new Medication entity is created with status=Active.
- * - Validates: drugName not empty, dosage > 0, startDate not in future, prescribingReason not empty.
+ * - Validates: drugName not empty, dosage > 0, prescriptionIssueDate not in future.
  * - Creates Medication Start event with proper title and description.
  */
 export async function startMedication(
@@ -77,9 +80,8 @@ export async function startMedication(
       dosage: new Prisma.Decimal(input.dosage),
       dosageUnit: input.dosageUnit,
       frequency: input.frequency,
-      route: input.route,
-      startDate: input.startDate,
-      prescribingReason: input.prescribingReason,
+      prescriptionIssueDate: input.prescriptionIssueDate,
+      comments: input.comments,
       status: MedicationStatus.Active,
       // endDate, discontinuationReason, predecessorId remain null
       // createdAt is set automatically via @default(now())
@@ -90,13 +92,13 @@ export async function startMedication(
   const eventResult = await emitMedicationStartEvent({
     clinicalRecordId: input.clinicalRecordId,
     medicationId: medication.id,
-    startDate: input.startDate,
+    prescriptionIssueDate: input.prescriptionIssueDate,
     title: getMedicationStartTitle(
       input.drugName,
       input.dosage,
       input.dosageUnit
     ),
-    description: input.prescribingReason,
+    description: input.comments,
   });
 
   if (!eventResult.success) {
@@ -153,11 +155,11 @@ export async function changeMedication(
     );
   }
 
-  if (input.effectiveDate < currentMedication.startDate) {
+  if (input.effectiveDate < currentMedication.prescriptionIssueDate) {
     return err(
       new DomainError(
         "INVALID_DATE_RANGE",
-        "Effective date cannot be before the original start date"
+        "Effective date cannot be before the original prescription issue date"
       )
     );
   }
@@ -199,9 +201,8 @@ export async function changeMedication(
         dosage: new Prisma.Decimal(input.newDosage),
         dosageUnit: input.newDosageUnit ?? currentMedication.dosageUnit,
         frequency: input.newFrequency ?? currentMedication.frequency,
-        route: input.newRoute ?? currentMedication.route,
-        startDate: input.effectiveDate,
-        prescribingReason: currentMedication.prescribingReason,
+        prescriptionIssueDate: input.effectiveDate,
+        comments: currentMedication.comments,
         status: MedicationStatus.Active,
         predecessorId: currentMedication.id,
       },
@@ -240,7 +241,7 @@ export async function changeMedication(
  *
  * Per WRITE-EVENT-MEDICATION-STOP contract:
  * - Trigger: A Medication entity transitions from status=Active to status=Discontinued.
- * - Validates: endDate >= startDate, discontinuationReason not empty.
+ * - Validates: endDate >= prescriptionIssueDate, discontinuationReason not empty.
  * - Sets status = Discontinued, endDate, discontinuationReason.
  * - Emits Medication Stop event.
  */
@@ -273,7 +274,7 @@ export async function stopMedication(
 
   // Validate stop input
   const validation = validateStopMedicationInput(input, {
-    startDate: medication.startDate,
+    prescriptionIssueDate: medication.prescriptionIssueDate,
   });
   if (!validation.valid) {
     return err(
@@ -330,7 +331,7 @@ export async function getMedicationWithHistory(medicationId: string): Promise<
     include: {
       predecessor: true,
       successors: {
-        orderBy: { startDate: "asc" },
+        orderBy: { prescriptionIssueDate: "asc" },
       },
     },
   });
@@ -370,10 +371,86 @@ export async function getMedicationsForClinicalRecord(
 
   const medications = await prisma.medication.findMany({
     where: { clinicalRecordId },
-    orderBy: { startDate: "desc" },
+    orderBy: { prescriptionIssueDate: "desc" },
   });
 
   return ok(medications);
+}
+
+/**
+ * Issues a new prescription for an active medication.
+ *
+ * Per WRITE-EVENT-MEDICATION-PRESCRIPTION-ISSUED contract:
+ * - Trigger: A new prescription is issued for an active medication without modifying parameters.
+ * - Validates: medication is active, prescriptionIssueDate is after original prescriptionIssueDate, not in future.
+ * - Creates MedicationPrescriptionIssued event.
+ * - Does NOT modify the Medication entity.
+ */
+export async function issuePrescription(
+  input: IssuePrescriptionInput
+): Promise<Result<ClinicalEvent>> {
+  // Find the medication
+  const medication = await prisma.medication.findUnique({
+    where: { id: input.medicationId },
+  });
+
+  if (!medication) {
+    return err(
+      new DomainError(
+        "MEDICATION_NOT_FOUND",
+        `Medication ${input.medicationId} not found`
+      )
+    );
+  }
+
+  // Verify medication is active
+  if (medication.status !== MedicationStatus.Active) {
+    return err(
+      new DomainError(
+        "MEDICATION_NOT_ACTIVE_CANNOT_ISSUE_PRESCRIPTION",
+        "Cannot issue prescription for a discontinued medication"
+      )
+    );
+  }
+
+  // Validate prescription issue date
+  if (input.prescriptionIssueDate > new Date()) {
+    return err(
+      new DomainError(
+        "INVALID_TIMESTAMP_FUTURE",
+        "Prescription issue date cannot be in the future"
+      )
+    );
+  }
+
+  // Validate that new prescription date is after original prescription issue date
+  if (input.prescriptionIssueDate <= medication.prescriptionIssueDate) {
+    return err(
+      new DomainError(
+        "INVALID_PRESCRIPTION_DATE_MUST_BE_AFTER_FIRST",
+        "New prescription date must be after the original prescription issue date"
+      )
+    );
+  }
+
+  // Emit the Medication Prescription Issued event
+  const eventResult = await emitMedicationPrescriptionIssuedEvent({
+    clinicalRecordId: medication.clinicalRecordId,
+    medicationId: medication.id,
+    prescriptionIssueDate: input.prescriptionIssueDate,
+    title: getMedicationPrescriptionIssuedTitle(
+      medication.drugName,
+      medication.dosage,
+      medication.dosageUnit
+    ),
+    description: input.comments,
+  });
+
+  if (!eventResult.success) {
+    return err(eventResult.error);
+  }
+
+  return ok(eventResult.data);
 }
 
 /**

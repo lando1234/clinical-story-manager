@@ -75,8 +75,8 @@ export interface ActiveMedication {
   dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
-  startDate: Date;
-  prescribingReason: string;
+  prescriptionIssueDate: Date;
+  comments: string | null;
 }
 
 /**
@@ -141,7 +141,7 @@ export interface HistoricalActiveMedication {
   dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
-  startDate: Date;
+  prescriptionIssueDate: Date;
 }
 
 /**
@@ -255,10 +255,9 @@ export interface MedicationSourceData {
   dosage: Prisma.Decimal;
   dosageUnit: string;
   frequency: string;
-  route: string | null;
-  startDate: Date;
+  prescriptionIssueDate: Date;
   endDate: Date | null;
-  prescribingReason: string;
+  comments: string | null;
   discontinuationReason: string | null;
   status: MedicationStatus;
   predecessorIdentifier: string | null;

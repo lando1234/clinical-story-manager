@@ -217,10 +217,9 @@ export interface CreateMedicationOptions {
   dosage?: number | Prisma.Decimal;
   dosageUnit?: string;
   frequency?: string;
-  route?: string;
-  startDate?: Date;
+  prescriptionIssueDate?: Date;
   endDate?: Date | null;
-  prescribingReason?: string;
+  comments?: string | null;
   discontinuationReason?: string | null;
   status?: MedicationStatus;
   predecessorId?: string | null;
@@ -241,10 +240,9 @@ export async function createTestMedication(
       dosage: options.dosage ?? 50,
       dosageUnit: options.dosageUnit ?? "mg",
       frequency: options.frequency ?? "once daily",
-      route: options.route ?? "oral",
-      startDate: options.startDate ?? new Date(),
+      prescriptionIssueDate: options.prescriptionIssueDate ?? new Date(),
       endDate: options.endDate,
-      prescribingReason: options.prescribingReason ?? "Depression",
+      comments: options.comments ?? "Depression",
       discontinuationReason: options.discontinuationReason,
       status: options.status ?? MedicationStatus.Active,
       predecessorId: options.predecessorId,
@@ -353,12 +351,12 @@ export async function createTestEncounterEvent(
 export async function createTestMedicationStartEvent(
   clinicalRecordId: string,
   medicationId: string,
-  startDate: Date,
+  prescriptionIssueDate: Date,
   drugName: string
 ): Promise<ClinicalEvent> {
   return createTestEvent({
     clinicalRecordId,
-    eventDate: startDate,
+    eventDate: prescriptionIssueDate,
     eventType: ClinicalEventType.MedicationStart,
     title: `Started ${drugName}`,
     sourceType: SourceType.Medication,
