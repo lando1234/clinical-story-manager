@@ -53,6 +53,22 @@ export async function createDraftNote(
     );
   }
 
+  const hasClinicalContent = [
+    input.subjective,
+    input.objective,
+    input.assessment,
+    input.plan,
+  ].some((value) => value?.trim());
+
+  if (!hasClinicalContent) {
+    return err(
+      new DomainError(
+        "MISSING_REQUIRED_FIELDS",
+        "At least one clinical section must contain content"
+      )
+    );
+  }
+
   const note = await prisma.note.create({
     data: {
       clinicalRecordId: input.clinicalRecordId,
@@ -106,6 +122,26 @@ export async function updateDraftNote(
       new DomainError(
         "INVALID_TIMESTAMP_FUTURE",
         "Encounter date cannot be in the future"
+      )
+    );
+  }
+
+  const updatedContent = {
+    subjective: input.subjective ?? existingNote.subjective,
+    objective: input.objective ?? existingNote.objective,
+    assessment: input.assessment ?? existingNote.assessment,
+    plan: input.plan ?? existingNote.plan,
+  };
+
+  const hasClinicalContent = Object.values(updatedContent).some((value) =>
+    value?.trim()
+  );
+
+  if (!hasClinicalContent) {
+    return err(
+      new DomainError(
+        "MISSING_REQUIRED_FIELDS",
+        "At least one clinical section must contain content"
       )
     );
   }
