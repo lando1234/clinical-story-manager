@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface IssuePrescriptionModalProps {
@@ -50,14 +50,10 @@ export function IssuePrescriptionModal({
     }
 
     const prescriptionIssueDateObj = new Date(prescriptionIssueDate);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
 
-    if (prescriptionIssueDateObj > today) {
-      setSubmitError('La fecha de emisión de receta no puede ser futura');
-      return;
-    }
-
+    // Note: Per INC-14 resolution, future dates are allowed for MedicationPrescriptionIssued events.
+    // Events with future dates are created but filtered from timeline until date passes.
+    // Only validate that new prescription date is after original prescription issue date
     // Validate that new prescription date is after original prescription issue date
     const originalDate = new Date(originalPrescriptionIssueDate);
     originalDate.setHours(0, 0, 0, 0);

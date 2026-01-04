@@ -247,15 +247,25 @@ export const PatientService = {
       // Create Foundational Timeline Event
       // Per spec: docs/21_foundational_timeline_event.md
       // Event date is the ClinicalRecord creation date
+      // Pass transaction client so it can see the uncommitted ClinicalRecord
+      // Per spec, Foundational event creation should always succeed - it's a critical part of patient creation
       const foundationalEventResult = await emitFoundationalEvent({
         clinicalRecordId: clinicalRecord.id,
         eventDate: clinicalRecord.createdAt,
-      });
+      }, tx);
 
       if (!foundationalEventResult.success) {
-        console.error("Failed to emit foundational event:", foundationalEventResult.error);
-        // Note: We don't fail the transaction if event creation fails,
-        // but we log the error for debugging
+        // Foundational event creation failure is a critical error
+        // Per spec: docs/21_foundational_timeline_event.md, every ClinicalRecord must have a Foundational event
+        const errorMessage = `Failed to create foundational timeline event: ${foundationalEventResult.error.message || foundationalEventResult.error.code || 'Unknown error'}`;
+        console.error(errorMessage, {
+          clinicalRecordId: clinicalRecord.id,
+          eventDate: clinicalRecord.createdAt,
+          error: foundationalEventResult.error,
+        });
+        // Fail the transaction to ensure data consistency
+        // A ClinicalRecord without a Foundational event violates the spec
+        throw new Error(errorMessage);
       }
 
       return patient;

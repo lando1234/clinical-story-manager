@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Referencia de terminología:** Este documento utiliza la terminología estándar definida en [`09_terminology_glossary.md`](../00_foundation/09_terminology_glossary.md). Términos clave: **Encuentro clínico**, **Evento NOTE**, **Nota Clínica**, **Turno agendado**, **Evento Encounter**.
+
 Este documento define formalmente el modelo funcional de:
 - **Nota Clínica** (documento clínico)
 - **Evento NOTE** (evento en la timeline)
@@ -9,9 +11,9 @@ Este documento define formalmente el modelo funcional de:
 Esta especificación establece la separación conceptual y funcional entre el documento clínico y su representación en la timeline, garantizando la integridad clínica y legal del sistema.
 
 **Principio central (no negociable):**
-- **Encounter NO existe como tipo de evento.**
-- Al finalizar una Nota clínica se crea un evento NOTE en la timeline.
+- Al finalizar una Nota clínica se crea un evento **NOTE** en la timeline (no un evento Encounter).
 - La Nota (documento) y el evento NOTE (timeline) son entidades distintas.
+- **Encounter es un tipo de evento válido, pero se genera desde Appointments, no desde Notes.**
 
 ---
 
@@ -19,12 +21,12 @@ Esta especificación establece la separación conceptual y funcional entre el do
 
 ### 1.1 Función Clínica
 
-La Nota Clínica es el documento que captura la documentación estructurada de un encuentro entre el clínico y el paciente.
+La Nota Clínica es el documento que captura la documentación estructurada de un Encuentro clínico entre el clínico y el paciente.
 
 **Propósito fundamental:**
 
-1. **Documentar el contenido clínico** — Registra las observaciones, hallazgos, evaluaciones y planes del encuentro
-2. **Preservar el razonamiento clínico** — Mantiene registro de qué pensó el clínico en el momento del encuentro
+1. **Documentar el contenido clínico** — Registra las observaciones, hallazgos, evaluaciones y planes del Encuentro clínico
+2. **Preservar el razonamiento clínico** — Mantiene registro de qué pensó el clínico en el momento del Encuentro clínico
 3. **Cumplir requisitos legales** — Proporciona documentación médica completa y estructurada
 4. **Permitir revisión histórica** — Facilita la comprensión de decisiones clínicas pasadas
 5. **Soportar trabajo en progreso** — Permite documentación en borrador antes de finalizar
@@ -47,7 +49,7 @@ La Nota Clínica es la unidad fundamental de documentación clínica en el siste
 **Con el ClinicalRecord:**
 - La Nota pertenece a un ClinicalRecord
 - El ClinicalRecord contiene todas las Notas del paciente
-- Las Notas se organizan por fecha de encuentro
+- Las Notas se organizan por fecha de Encuentro clínico
 
 **Con Addenda:**
 - Los Addenda se adjuntan a Notas finalizadas
@@ -60,7 +62,7 @@ La Nota Clínica es la unidad fundamental de documentación clínica en el siste
 
 ### 2.1 Qué es una Nota Clínica
 
-Una **Nota Clínica** es una instancia de la entidad `Note` que contiene la documentación estructurada de un encuentro clínico.
+Una **Nota Clínica** es una instancia de la entidad `Note` que contiene la documentación estructurada de un Encuentro clínico.
 
 **Características esenciales:**
 
@@ -75,8 +77,8 @@ Una **Nota Clínica** es una instancia de la entidad `Note` que contiene la docu
 | Atributo | Tipo | Propósito | Inmutabilidad |
 |----------|------|-----------|---------------|
 | **id** | Identificador único | Identificación de la nota | Inmutable |
-| **encounterDate** | Fecha | Fecha en que ocurrió el encuentro | Inmutable (una vez finalizada) |
-| **encounterType** | Enumeration | Tipo de encuentro | Inmutable (una vez finalizada) |
+| **encounterDate** | Fecha | Fecha en que ocurrió el Encuentro clínico | Inmutable (una vez finalizada) |
+| **encounterType** | Enumeration | Tipo de Encuentro clínico | Inmutable (una vez finalizada) |
 | **status** | Enumeration | Draft o Finalized | Solo transición Draft → Finalized |
 | **subjective** | Texto (opcional) | Observaciones subjetivas del paciente | Inmutable (una vez finalizada) |
 | **objective** | Texto (opcional) | Hallazgos objetivos del clínico | Inmutable (una vez finalizada) |
@@ -120,7 +122,7 @@ Una **Nota Clínica** es una instancia de la entidad `Note` que contiene la docu
 
 - Preservar la documentación legal
 - Garantizar integridad clínica
-- Permitir que el encuentro aparezca en la timeline
+- Permitir que el Encuentro clínico aparezca en la timeline
 - Establecer el documento como parte del registro permanente
 
 ### 2.4 Inmutabilidad de la Nota Clínica
@@ -141,8 +143,8 @@ Una vez que una Nota Clínica transiciona a estado `Finalized`, su contenido es 
 
 Una vez finalizada, los siguientes campos son **permanentemente inmutables**:
 
-- `encounterDate` — La fecha del encuentro no puede cambiar
-- `encounterType` — El tipo de encuentro no puede cambiar
+- `encounterDate` — La fecha del Encuentro clínico no puede cambiar
+- `encounterType` — El tipo de Encuentro clínico no puede cambiar
 - `subjective` — Las observaciones subjetivas no pueden modificarse
 - `objective` — Los hallazgos objetivos no pueden modificarse
 - `assessment` — La evaluación clínica no puede modificarse
@@ -168,9 +170,9 @@ Las correcciones se realizan mediante **Addenda**, no mediante modificación del
 
 El contenido original y los Addenda se presentan juntos, preservando la transparencia del registro.
 
-### 2.5 Tipos de Encuentro
+### 2.5 Tipos de Encuentro Clínico
 
-Los tipos de encuentro definen la naturaleza de la interacción clínica:
+Los tipos de Encuentro clínico definen la naturaleza de la interacción clínica:
 
 | Tipo | Descripción |
 |------|-------------|
@@ -180,9 +182,9 @@ Los tipos de encuentro definen la naturaleza de la interacción clínica:
 | **Medication Review** | Revisión específica de medicación |
 | **Therapy Session** | Sesión de terapia |
 | **Phone Consultation** | Consulta telefónica |
-| **Other** | Otro tipo de encuentro no especificado |
+| **Other** | Otro tipo de Encuentro clínico no especificado |
 
-**Regla:** El tipo de encuentro es inmutable una vez finalizada la Nota.
+**Regla:** El tipo de Encuentro clínico es inmutable una vez finalizada la Nota.
 
 ---
 
@@ -198,7 +200,7 @@ Un **Evento NOTE** es una instancia de `ClinicalEvent` con `eventType = NOTE` qu
 - Representa el **hecho** de que una Nota Clínica fue finalizada
 - Aparece en la Timeline del paciente
 - Es inmutable desde el momento de su creación
-- Tiene una fecha de ocurrencia clínica (`eventDate`) que representa cuándo ocurrió el encuentro
+- Tiene una fecha de ocurrencia clínica (`eventDate`) que representa cuándo ocurrió el Encuentro clínico
 - Tiene una fecha de registro (`recordedAt`) que representa cuándo fue documentado en el sistema
 - Referencia a la Nota Clínica que lo generó
 
@@ -207,10 +209,10 @@ Un **Evento NOTE** es una instancia de `ClinicalEvent` con `eventType = NOTE` qu
 | Atributo | Tipo | Propósito | Inmutabilidad |
 |----------|------|-----------|---------------|
 | **id** | Identificador único | Identificación del evento | Inmutable |
-| **eventDate** | Fecha | Fecha en que ocurrió el encuentro clínico | Inmutable |
+| **eventDate** | Fecha | Fecha en que ocurrió el Encuentro clínico | Inmutable |
 | **eventType** | Enumeration | Siempre "NOTE" | Inmutable |
-| **title** | Texto | Resumen breve del encuentro | Inmutable |
-| **description** | Texto (opcional) | Descripción detallada del encuentro | Inmutable |
+| **title** | Texto | Resumen breve del Encuentro clínico | Inmutable |
+| **description** | Texto (opcional) | Descripción detallada del Encuentro clínico | Inmutable |
 | **recordedAt** | Timestamp | Cuándo fue documentado el evento | Inmutable |
 | **sourceType** | Enumeration | Siempre "Note" | Inmutable |
 | **sourceId** | Identificador | Referencia a la Nota que lo generó | Inmutable |
@@ -219,10 +221,10 @@ Un **Evento NOTE** es una instancia de `ClinicalEvent` con `eventType = NOTE` qu
 
 El Evento NOTE existe para:
 
-1. **Marcar temporalmente el encuentro** — Establece cuándo ocurrió la interacción clínica en la historia del paciente
+1. **Marcar temporalmente el Encuentro clínico** — Establece cuándo ocurrió la interacción clínica en la historia del paciente
 2. **Aparecer en la Timeline** — Proporciona un punto de referencia cronológico en la narrativa longitudinal
-3. **Preservar el hecho histórico** — Garantiza que el hecho de que se documentó un encuentro no puede ser eliminado
-4. **Permitir navegación temporal** — Facilita la ubicación de encuentros en el tiempo
+3. **Preservar el hecho histórico** — Garantiza que el hecho de que se documentó un Encuentro clínico no puede ser eliminado
+4. **Permitir navegación temporal** — Facilita la ubicación de Encuentros clínicos en el tiempo
 5. **Correlacionar con otros eventos** — Permite ver encuentros junto con cambios de medicación, hospitalizaciones, etc.
 
 ### 3.4 Lo que NO es un Evento NOTE
@@ -231,26 +233,31 @@ El Evento NOTE existe para:
 - **NO es editable** — Una vez creado, no puede modificarse
 - **NO aparece en estado Draft** — Solo existe cuando una Nota es finalizada
 - **NO puede eliminarse** — Es permanente en la Timeline
-- **NO es un tipo de evento "Encounter"** — El tipo de evento es NOTE, no Encounter
+- **NO es un tipo de evento "Encounter"** — El tipo de evento es NOTE, no Encounter (los eventos Encounter son un tipo diferente generado desde Appointments)
 
-### 3.5 Exclusión Explícita: Encounter NO Existe
+### 3.5 Separación entre NOTE y Encounter
 
-**Regla fundamental:**
+**Clarificación importante:**
 
-**Encounter NO existe como tipo de evento en el sistema.**
+**NOTE y Encounter son tipos de evento diferentes con orígenes distintos:**
 
-**Implicaciones:**
+| Aspecto | Evento NOTE | Evento Encounter |
+|---------|-------------|------------------|
+| **Origen** | Note (nota clínica finalizada) | Appointment (turno agendado que ya pasó) |
+| **Representa** | Documentación de un Encuentro clínico | Ocurrencia de un Turno agendado |
+| **Tipo de evento** | `NOTE` | `Encounter` |
+| **Source Type** | `Note` | `Appointment` |
+| **Cuándo se genera** | Al finalizar una Nota | Cuando la fecha del turno ya pasó |
 
-- No existe `eventType = Encounter`
-- No existe "Evento de Encuentro"
-- El único tipo de evento relacionado con Notas es `NOTE`
-- Cualquier referencia a "Encounter" como tipo de evento es incorrecta
+**Principio de separación:**
 
-**Razón de la exclusión:**
+- **NOTE** representa la **documentación** de un Encuentro clínico (desde una Nota finalizada)
+- **Encounter** representa la **ocurrencia** de un turno agendado (desde un Appointment pasado)
+- Ambos tipos de evento son válidos y coexisten en el sistema
+- Un turno (Appointment) puede generar un evento Encounter sin tener una Nota asociada
+- Una Nota finalizada genera un evento NOTE, no un evento Encounter
 
-- La separación conceptual entre documento (Nota) y evento (NOTE) requiere un nombre distinto
-- "Encounter" sugiere el encuentro clínico mismo, no la documentación
-- "NOTE" refleja que el evento representa la finalización de una Nota Clínica
+Para más detalles sobre eventos Encounter, ver `23_encounter_appointment_spec.md`.
 
 ---
 
@@ -293,8 +300,8 @@ La generación del evento es **automática e inmediata**. No hay intervención m
 
 | Dato | Fuente | Destino | Regla |
 |------|--------|---------|-------|
-| **Fecha del encuentro** | `Note.encounterDate` | `ClinicalEvent.eventDate` | Copia exacta al momento de finalización |
-| **Tipo de encuentro** | `Note.encounterType` | `ClinicalEvent.title` | Transformado en título descriptivo |
+| **Fecha del Encuentro clínico** | `Note.encounterDate` | `ClinicalEvent.eventDate` | Copia exacta al momento de finalización |
+| **Tipo de Encuentro clínico** | `Note.encounterType` | `ClinicalEvent.title` | Transformado en título descriptivo |
 | **Referencia** | `Note.id` | `ClinicalEvent.sourceId` | Establecida al crear el evento |
 | **Tipo de fuente** | N/A | `ClinicalEvent.sourceType` | Siempre "Note" |
 | **Tipo de evento** | N/A | `ClinicalEvent.eventType` | Siempre "NOTE" |
@@ -345,8 +352,8 @@ Los Addenda (anexos) de una Nota **NO generan nuevos Eventos NOTE**.
    - `createdAt` se establece al momento de creación
 
 2. **Clínico completa campos**
-   - `encounterDate` — Fecha del encuentro
-   - `encounterType` — Tipo de encuentro
+   - `encounterDate` — Fecha del Encuentro clínico
+   - `encounterType` — Tipo de Encuentro clínico
    - `subjective` — Observaciones subjetivas (opcional)
    - `objective` — Hallazgos objetivos (opcional)
    - `assessment` — Evaluación clínica (opcional)
@@ -592,7 +599,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 **Reglas de ordenamiento (según Timeline Engine):**
 
-1. **Ordenamiento primario:** Por `eventDate` (fecha del encuentro)
+1. **Ordenamiento primario:** Por `eventDate` (fecha del Encuentro clínico)
 2. **Ordenamiento secundario:** Por `recordedAt` (fecha de registro)
 3. **Ordenamiento terciario:** Por prioridad de tipo de evento
    - Los eventos NOTE tienen prioridad según las reglas del Timeline Engine
@@ -608,36 +615,40 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 ## 8. Reglas Explícitas de Exclusión
 
-### 8.1 Eliminación del Concepto Encounter
+### 8.1 Separación entre NOTE y Encounter
 
 **Regla fundamental:**
 
-**Encounter NO existe como tipo de evento en el sistema.**
+**Las Notas finalizadas generan eventos NOTE, no eventos Encounter.**
 
-**Exclusiones específicas:**
+**Separación de tipos de evento:**
 
-1. **No existe `eventType = Encounter`**
-   - El único tipo de evento relacionado con Notas es `NOTE`
-   - Cualquier referencia a "Encounter" como tipo de evento es incorrecta
+1. **Evento NOTE** (este documento)
+   - Generado por: Notas Clínicas finalizadas
+   - `eventType = NOTE`
+   - `sourceType = Note`
+   - Representa: La documentación clínica de un Encuentro clínico
 
-2. **No existe "Evento de Encuentro"**
-   - El término correcto es "Evento NOTE"
-   - No debe usarse "Evento de Encuentro" en documentación, código o UI
+2. **Evento Encounter** (ver `23_encounter_appointment_spec.md`)
+   - Generado por: Appointments (turnos agendados) cuya fecha ya pasó
+   - `eventType = Encounter`
+   - `sourceType = Appointment`
+   - Representa: El hecho de que ocurrió un turno agendado
 
-3. **No existe generación de "Encounter events"**
-   - Las Notas finalizadas generan eventos NOTE, no eventos Encounter
-   - Cualquier lógica que genere eventos Encounter es incorrecta
+**Principio de separación:**
 
-4. **No existe referencia a Encounter en el Timeline Engine**
-   - El Timeline Engine no reconoce Encounter como tipo de evento válido
-   - Las reglas de ordenamiento no incluyen Encounter
+- **NOTE** = Documentación clínica (Nota finalizada)
+- **Encounter** = Turno agendado que ocurrió (Appointment pasado)
+- Son dos tipos de eventos diferentes con fuentes diferentes
+- Una Nota finalizada **nunca** genera un evento Encounter
+- Un Appointment pasado **nunca** genera un evento NOTE
 
-**Razón de la exclusión:**
+**Razón de la separación:**
 
 - La separación conceptual entre documento (Nota) y evento (NOTE) requiere un nombre distinto
-- "Encounter" sugiere el encuentro clínico mismo, no la documentación
 - "NOTE" refleja que el evento representa la finalización de una Nota Clínica
-- Esta distinción previene confusiones entre el hecho clínico y su documentación
+- "Encounter" refleja que el evento representa un turno agendado que ocurrió
+- Esta distinción previene confusiones entre documentación clínica y planificación administrativa
 
 ### 8.2 Otras Exclusiones
 
@@ -651,7 +662,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 - Las reglas de ordenamiento permanecen sin cambios
 - Las reglas de inmutabilidad permanecen sin cambios
-- Las reglas de generación de eventos permanecen sin cambios (excepto la exclusión de Encounter)
+- Las reglas de generación de eventos permanecen sin cambios
 
 **No se define UI concreta:**
 
@@ -681,7 +692,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 **Trazabilidad temporal:**
 
-- El evento NOTE marca cuándo ocurrió el encuentro (`eventDate`)
+- El evento NOTE marca cuándo ocurrió el Encuentro clínico (`eventDate`)
 - El evento NOTE registra cuándo fue documentado (`recordedAt`)
 - Esta dualidad temporal permite reconstruir la secuencia de eventos y documentación
 
@@ -829,7 +840,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 ### 11.1 Separación Fundamental
 
 **Nota Clínica:**
-- Es el **documento** que contiene la documentación estructurada del encuentro
+- Es el **documento** que contiene la documentación estructurada del Encuentro clínico
 - Puede estar en Draft o Finalizada
 - Solo las finalizadas generan eventos NOTE
 - Es inmutable en contenido una vez finalizada
@@ -842,7 +853,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 ### 11.2 Principios Clave
 
-1. **Un encuentro, dos representaciones** — El documento (Nota) y el evento (NOTE) son entidades distintas
+1. **Un Encuentro clínico, dos representaciones** — El documento (Nota) y el evento (NOTE) son entidades distintas
 2. **Generación automática** — El Evento NOTE se crea cuando la Nota se finaliza
 3. **Independencia después de la creación** — Una vez creado, el Evento NOTE es independiente
 4. **Inmutabilidad por razones diferentes** — Evento preserva historia, Nota preserva documentación legal

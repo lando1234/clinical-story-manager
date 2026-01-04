@@ -10,12 +10,20 @@ const globalForPrisma = globalThis as unknown as {
   pool: Pool | undefined;
 };
 
-// Create connection pool with SSL support for Neon
+// Determine if SSL is needed based on DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL ?? "";
+const needsSSL = databaseUrl.includes("sslmode") || 
+                 databaseUrl.includes("neon.tech") || 
+                 (!databaseUrl.includes("localhost") && !databaseUrl.includes("127.0.0.1"));
+
+// Create connection pool with conditional SSL support
 const pool = globalForPrisma.pool ?? new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  connectionString: databaseUrl,
+  ...(needsSSL && {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  }),
 });
 
 // Create Prisma adapter

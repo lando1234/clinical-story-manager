@@ -236,7 +236,7 @@ An event references a source entity that no longer exists or never existed.
 
 Examples:
 - Medication event with no corresponding medication entry
-- Encounter event with orphaned or deleted draft note
+- NOTE event with orphaned or deleted draft note
 - History update event with missing version
 
 Questions:
@@ -538,7 +538,7 @@ Questions:
 - Should planned medications be distinguished from active?
 - When does the medication appear on the timeline?
 
-**Resolution:** Future medication start dates are prohibited per UC-04 validation rules. Planned future prescriptions are documented in the encounter note's Plan section, not as medication entries. A medication entry is created when the prescription becomes active.
+**Resolution:** Future medication start dates are prohibited for new medications (MedicationStart events) per UC-04 validation rules. However, future dates are allowed for dose adjustments (MedicationChange) and new prescription issuances (MedicationPrescriptionIssued). Events with future dates are created but filtered from timeline display until their date passes (similar to Encounter events). Planned future prescriptions that are not yet active are documented in the encounter note's Plan section, not as medication entries. A medication entry is created when the prescription becomes active.
 
 ### 7.3 Events at Exact Midnight
 

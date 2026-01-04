@@ -44,7 +44,7 @@ All items are derived from the specification documents. No new features or scope
 
 ### 1.3 Event Generation Rules
 
-- [ ] Note finalization generates exactly one Encounter event
+- [ ] Note finalization generates exactly one NOTE event
 - [ ] New Medication generates Medication Start event
 - [ ] Medication dosage/frequency change generates Medication Change event
 - [ ] Medication discontinuation generates Medication Stop event
@@ -127,7 +127,7 @@ All items are derived from the specification documents. No new features or scope
 
 - [ ] Patient has exactly one ClinicalRecord
 - [ ] ClinicalRecord has exactly one current PsychiatricHistory
-- [ ] Finalized Note generates exactly one Encounter event
+- [ ] Finalized Note generates exactly one NOTE event
 - [ ] Each PsychiatricHistory version has a unique sequential version number
 
 ### 3.5 Duplicate Detection
@@ -297,4 +297,4 @@ All items are derived from the specification documents. No new features or scope
 
 *Document Version: 1.0*
 *Status: Final*
-*Sources: 01_specs.md, 02_domain.md, 03_timeline.md, 04_use_cases.md, 05_edge_cases.md, 07_inconsistency_resolution.md*
+*Sources: 01_specs.md, 02_domain.md, 03_timeline.md, 04_use_cases.md, 05_edge_cases.md, ../../audit/inconsistences/07_inconsistency_resolution.md*

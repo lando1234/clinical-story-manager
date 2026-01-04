@@ -197,6 +197,8 @@ Immutable supplement to a finalized Note. Provides mechanism to add information 
 
 ### 1.6 Medication
 
+> **Note:** This Medication data model reflects updates specified in [`22_cambios_medicacion_actualizacion.md`](../02_events/22_cambios_medicacion_actualizacion.md). See the update document for complete field changes and migration considerations.
+
 **Purpose:**
 Pharmaceutical agent record tracking the complete lifecycle from initiation through discontinuation. Dosage changes create new records linked to predecessors.
 
@@ -210,10 +212,9 @@ Pharmaceutical agent record tracking the complete lifecycle from initiation thro
 | dosage | Decimal | Numeric dosage value |
 | dosage_unit | Text | Unit of measurement (mg, mcg, etc.) |
 | frequency | Text | Dosing schedule |
-| route | Text (nullable) | Route of administration |
-| start_date | Date | When medication was initiated |
+| prescription_issue_date | Date | When prescription was issued |
 | end_date | Date (nullable) | When medication was discontinued |
-| prescribing_reason | Text | Why medication was prescribed |
+| comments | Text (nullable) | Optional comments about the prescription |
 | discontinuation_reason | Text (nullable) | Why medication was stopped |
 | status | Enumeration | Active or Discontinued |
 | predecessor_id | Foreign Key (nullable) | Reference to previous version if dosage changed |
@@ -264,7 +265,7 @@ Timeline entry representing a clinically significant occurrence. Provides unifie
 - Other
 
 **Source Type Values:**
-- Note (for Encounter events)
+- Note (for NOTE events)
 - Medication (for Medication events)
 - PsychiatricHistory (for History Update events)
 - Manual (for Hospitalization, Life Event, Other)
@@ -370,7 +371,7 @@ Placeholder for scheduled future encounters. Minimal implementation supporting n
 ### 2.3 Temporal Handling
 
 **Date vs Timestamp:**
-- Clinical dates (encounter_date, start_date, event_date): Date only, no time component
+- Clinical dates (encounter_date, prescription_issue_date, event_date): Date only, no time component
 - System timestamps (created_at, finalized_at, recorded_at): Full timestamp with timezone
 - Scheduled times (scheduled_time): Time only, separate from date
 
@@ -408,14 +409,20 @@ Placeholder for scheduled future encounters. Minimal implementation supporting n
 3. Tertiary: event_type priority ascending
 
 **Event Type Priority Order:**
-1. Encounter (priority 1)
-2. Medication Start (priority 2)
-3. Medication Change (priority 3)
-4. Medication Stop (priority 4)
-5. Hospitalization (priority 5)
-6. Life Event (priority 6)
-7. History Update (priority 7)
-8. Other (priority 8)
+0. Foundational (priority 0 - highest)
+1. Encounter (priority 2)
+2. Medication Start (priority 3)
+3. Medication Change (priority 4)
+4. Medication Prescription Issued (priority 5)
+5. Medication Stop (priority 6)
+6. Hospitalization (priority 7)
+7. Life Event (priority 8)
+8. History Update (priority 9)
+9. Other (priority 10)
+
+**Special Case: NOTE Events**
+
+NOTE events do not have a fixed priority. They are ordered chronologically by event timestamp, then recorded timestamp, then identifier, without priority-based positioning.
 
 **Invariant:**
 Timeline ordering must be deterministic. Given the same data, the same order must always result.
@@ -439,7 +446,7 @@ Timeline ordering must be deterministic. Given the same data, the same order mus
 ### 3.3 Event Generation Integrity
 
 **Guaranteed Event Creation:**
-- Note finalization MUST create exactly one Encounter event
+- Note finalization MUST create exactly one NOTE event
 - Medication creation MUST create exactly one Medication Start event
 - Medication discontinuation MUST create exactly one Medication Stop event
 - PsychiatricHistory version 2+ MUST create exactly one History Update event
@@ -460,7 +467,7 @@ Timeline ordering must be deterministic. Given the same data, the same order mus
 **Prohibited:**
 - event_date must not be in the future
 - encounter_date must not be in the future
-- start_date must not be in the future (for medications)
+- prescription_issue_date must not be in the future (for medications)
 
 ---
 
@@ -561,7 +568,7 @@ Timeline ordering must be deterministic. Given the same data, the same order mus
 - id, note_id, content, reason
 
 **Medication:**
-- id, clinical_record_id, drug_name, dosage, dosage_unit, frequency, start_date, prescribing_reason, status
+- id, clinical_record_id, drug_name, dosage, dosage_unit, frequency, prescription_issue_date, comments, status
 - For discontinuation: end_date, discontinuation_reason (additional requirements)
 
 **ClinicalEvent:**

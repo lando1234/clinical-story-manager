@@ -146,15 +146,9 @@ export async function changeMedication(
   }
 
   // Validate effective date
-  if (input.effectiveDate > new Date()) {
-    return err(
-      new DomainError(
-        "INVALID_TIMESTAMP_FUTURE",
-        "Effective date cannot be in the future"
-      )
-    );
-  }
-
+  // Note: Future dates are allowed for MedicationChange events per INC-14 resolution.
+  // Events with future dates are created but filtered from timeline until date passes.
+  // Only validate that effective date is not before the original prescription issue date.
   if (input.effectiveDate < currentMedication.prescriptionIssueDate) {
     return err(
       new DomainError(
@@ -414,15 +408,9 @@ export async function issuePrescription(
   }
 
   // Validate prescription issue date
-  if (input.prescriptionIssueDate > new Date()) {
-    return err(
-      new DomainError(
-        "INVALID_TIMESTAMP_FUTURE",
-        "Prescription issue date cannot be in the future"
-      )
-    );
-  }
-
+  // Note: Future dates are allowed for MedicationPrescriptionIssued events per INC-14 resolution.
+  // Events with future dates are created but filtered from timeline until date passes.
+  // Only validate that new prescription date is after original prescription issue date.
   // Validate that new prescription date is after original prescription issue date
   if (input.prescriptionIssueDate <= medication.prescriptionIssueDate) {
     return err(

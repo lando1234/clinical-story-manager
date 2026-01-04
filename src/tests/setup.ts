@@ -5,20 +5,33 @@
  * This file is loaded before all tests via vitest.config.ts setupFiles.
  */
 
-// Load environment variables first
-import "dotenv/config";
+// Load environment variables from .env.test first
+import { config } from "dotenv";
+import { resolve } from "path";
+
+// Load .env.test file if it exists, otherwise fall back to .env
+config({ path: resolve(process.cwd(), ".env.test") });
+config({ path: resolve(process.cwd(), ".env") });
 
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { beforeAll, afterAll, beforeEach } from "vitest";
 
-// Create connection pool for tests with SSL support for Neon
+// Determine if SSL is needed based on DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL ?? "";
+const needsSSL = databaseUrl.includes("sslmode") || 
+                 databaseUrl.includes("neon.tech") || 
+                 (!databaseUrl.includes("localhost") && !databaseUrl.includes("127.0.0.1"));
+
+// Create connection pool for tests with conditional SSL support
 const testPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  connectionString: databaseUrl,
+  ...(needsSSL && {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  }),
 });
 
 // Create Prisma adapter

@@ -229,6 +229,32 @@ Plataforma de manejo de historia clínica longitudinal para un psiquiatra en pr�
 - Aplicar las migraciones de Prisma a la base de datos configurada.
 - Iniciar el servidor de desarrollo de Next.js.
 
+**Configuración de base de datos de test**
+
+Para ejecutar los tests, necesitas configurar una base de datos local de PostgreSQL:
+
+1. Crea un archivo `.env.test` en la raíz del proyecto:
+   ```bash
+   DATABASE_URL="postgresql://tu_usuario@localhost:5432/clinical_story_manager_test"
+   ```
+
+2. Crea la base de datos de test:
+   ```bash
+   npm run test:db:create
+   ```
+
+3. Aplica las migraciones:
+   ```bash
+   npm run test:db:setup
+   ```
+
+4. Ejecuta los tests:
+   ```bash
+   npm test
+   ```
+
+Para más detalles, consulta `docs/TEST_DATABASE_SETUP.md`.
+
 **Qué NO hacer**
 
 - No agregar comandos de migración o seed en pasos de build de producción.

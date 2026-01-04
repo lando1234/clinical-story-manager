@@ -12,13 +12,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { testPrisma, cleanupTestData } from "../setup";
 import {
   createCompletePatientSetup,
-  createTestNote,
   createTestFinalizedNote,
   createTestAddendum,
   createTestMedication,
   createTestDiscontinuedMedication,
   createTestPsychiatricHistory,
-  createTestEvent,
   createTestNoteEvent,
 } from "../utils/test-fixtures";
 import {
@@ -26,7 +24,19 @@ import {
   assertResultOk,
 } from "../utils/test-helpers";
 import { getEventSource } from "@/domain/timeline";
-import { NoteStatus, MedicationStatus, SourceType } from "@/generated/prisma";
+import { NoteStatus, MedicationStatus } from "@/generated/prisma";
+
+/**
+ * Compares two dates ignoring time and timezone components.
+ * Normalizes both dates to UTC before comparing to handle timezone differences.
+ */
+function isSameDate(date1: Date, date2: Date): boolean {
+  const d1 = new Date(date1);
+  d1.setUTCHours(0, 0, 0, 0);
+  const d2 = new Date(date2);
+  d2.setUTCHours(0, 0, 0, 0);
+  return d1.getTime() === d2.getTime();
+}
 
 describe("Historical Integrity Invariants", () => {
   beforeEach(async () => {
@@ -81,7 +91,7 @@ describe("Historical Integrity Invariants", () => {
         where: { id: note.id },
       });
 
-      expect(retrieved?.encounterDate.toDateString()).toBe(originalDate.toDateString());
+      expect(isSameDate(retrieved!.encounterDate, originalDate)).toBe(true);
     });
 
     it("finalized note finalized_at timestamp cannot be changed", async () => {
@@ -150,8 +160,8 @@ describe("Historical Integrity Invariants", () => {
       expect(retrieved?.dosage.toNumber()).toBe(50);
       expect(retrieved?.dosageUnit).toBe("mg");
       expect(retrieved?.frequency).toBe("once daily");
-      expect(retrieved?.prescriptionIssueDate.toDateString()).toBe(prescriptionIssueDate.toDateString());
-      expect(retrieved?.endDate?.toDateString()).toBe(endDate.toDateString());
+      expect(isSameDate(retrieved!.prescriptionIssueDate, prescriptionIssueDate)).toBe(true);
+      expect(isSameDate(retrieved!.endDate!, endDate)).toBe(true);
       expect(retrieved?.discontinuationReason).toBe("Side effects");
       expect(retrieved?.status).toBe(MedicationStatus.Discontinued);
     });
@@ -170,7 +180,7 @@ describe("Historical Integrity Invariants", () => {
         where: { id: medication.id },
       });
 
-      expect(retrieved?.prescriptionIssueDate.toDateString()).toBe(originalPrescriptionIssueDate.toDateString());
+      expect(isSameDate(retrieved!.prescriptionIssueDate, originalPrescriptionIssueDate)).toBe(true);
     });
 
     it("discontinued medication end_date is preserved", async () => {
@@ -187,7 +197,7 @@ describe("Historical Integrity Invariants", () => {
         where: { id: medication.id },
       });
 
-      expect(retrieved?.endDate?.toDateString()).toBe(originalEndDate.toDateString());
+      expect(isSameDate(retrieved!.endDate!, originalEndDate)).toBe(true);
     });
   });
 
@@ -235,18 +245,24 @@ describe("Historical Integrity Invariants", () => {
       const { clinicalRecord } = await createCompletePatientSetup();
       const supersededAt = daysAgo(2);
 
-      const history = await createTestPsychiatricHistory({
-        clinicalRecordId: clinicalRecord.id,
-        versionNumber: 1,
-        isCurrent: false,
-        supersededAt,
+      // Update the initial version 1 to be superseded
+      await testPrisma.psychiatricHistory.updateMany({
+        where: { clinicalRecordId: clinicalRecord.id, versionNumber: 1 },
+        data: { isCurrent: false, supersededAt },
+      });
+
+      const history = await testPrisma.psychiatricHistory.findFirst({
+        where: {
+          clinicalRecordId: clinicalRecord.id,
+          versionNumber: 1,
+        },
       });
 
       const retrieved = await testPrisma.psychiatricHistory.findUnique({
-        where: { id: history.id },
+        where: { id: history!.id },
       });
 
-      expect(retrieved?.supersededAt?.toDateString()).toBe(supersededAt.toDateString());
+      expect(isSameDate(retrieved!.supersededAt!, supersededAt)).toBe(true);
     });
   });
 
@@ -295,7 +311,7 @@ describe("Historical Integrity Invariants", () => {
       });
 
       // Add correction via addendum
-      const addendum = await createTestAddendum({
+      await createTestAddendum({
         noteId: note.id,
         content: "Correction content",
         reason: "Clarification",
@@ -436,22 +452,27 @@ describe("Historical Integrity Invariants", () => {
     it("psychiatric history version numbers form contiguous sequence", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
-      // Create multiple versions
-      const v1 = await createTestPsychiatricHistory({
-        clinicalRecordId: clinicalRecord.id,
-        versionNumber: 1,
-        isCurrent: false,
-        supersededAt: daysAgo(10),
+      // Update initial version 1 to be non-current
+      await testPrisma.psychiatricHistory.updateMany({
+        where: { clinicalRecordId: clinicalRecord.id, versionNumber: 1 },
+        data: { isCurrent: false, supersededAt: daysAgo(10) },
       });
 
-      const v2 = await createTestPsychiatricHistory({
+      await testPrisma.psychiatricHistory.findFirst({
+        where: {
+          clinicalRecordId: clinicalRecord.id,
+          versionNumber: 1,
+        },
+      });
+
+      await createTestPsychiatricHistory({
         clinicalRecordId: clinicalRecord.id,
         versionNumber: 2,
         isCurrent: false,
         supersededAt: daysAgo(5),
       });
 
-      const v3 = await createTestPsychiatricHistory({
+      await createTestPsychiatricHistory({
         clinicalRecordId: clinicalRecord.id,
         versionNumber: 3,
         isCurrent: true,
@@ -478,12 +499,10 @@ describe("Historical Integrity Invariants", () => {
     it("each version has a predecessor except version 1", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
-      // Create versions
-      await createTestPsychiatricHistory({
-        clinicalRecordId: clinicalRecord.id,
-        versionNumber: 1,
-        isCurrent: false,
-        supersededAt: daysAgo(5),
+      // Update initial version 1 to be non-current
+      await testPrisma.psychiatricHistory.updateMany({
+        where: { clinicalRecordId: clinicalRecord.id, versionNumber: 1 },
+        data: { isCurrent: false, supersededAt: daysAgo(5) },
       });
 
       await createTestPsychiatricHistory({
@@ -586,13 +605,21 @@ describe("Historical Integrity Invariants", () => {
     it("superseded psychiatric history versions are queryable", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
-      // Create superseded version
-      const oldVersion = await createTestPsychiatricHistory({
-        clinicalRecordId: clinicalRecord.id,
-        versionNumber: 1,
-        chiefComplaint: "Old complaint",
-        isCurrent: false,
-        supersededAt: daysAgo(5),
+      // Update initial version 1 to be superseded
+      await testPrisma.psychiatricHistory.updateMany({
+        where: { clinicalRecordId: clinicalRecord.id, versionNumber: 1 },
+        data: {
+          chiefComplaint: "Old complaint",
+          isCurrent: false,
+          supersededAt: daysAgo(5),
+        },
+      });
+
+      const oldVersion = await testPrisma.psychiatricHistory.findFirst({
+        where: {
+          clinicalRecordId: clinicalRecord.id,
+          versionNumber: 1,
+        },
       });
 
       // Create current version
@@ -605,7 +632,7 @@ describe("Historical Integrity Invariants", () => {
 
       // Superseded version should still be queryable
       const retrieved = await testPrisma.psychiatricHistory.findUnique({
-        where: { id: oldVersion.id },
+        where: { id: oldVersion!.id },
       });
 
       expect(retrieved).not.toBeNull();
@@ -676,8 +703,18 @@ describe("Historical Integrity Invariants", () => {
     it("all psychiatric history versions are queryable for a patient", async () => {
       const { clinicalRecord } = await createCompletePatientSetup();
 
-      // Create multiple versions
-      for (let i = 1; i <= 5; i++) {
+      // Update initial version 1
+      await testPrisma.psychiatricHistory.updateMany({
+        where: { clinicalRecordId: clinicalRecord.id, versionNumber: 1 },
+        data: {
+          chiefComplaint: "Complaint version 1",
+          isCurrent: false,
+          supersededAt: daysAgo(4),
+        },
+      });
+
+      // Create additional versions
+      for (let i = 2; i <= 5; i++) {
         await createTestPsychiatricHistory({
           clinicalRecordId: clinicalRecord.id,
           versionNumber: i,

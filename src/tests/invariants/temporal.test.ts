@@ -14,7 +14,6 @@ import {
   createCompletePatientSetup,
   createTestEvent,
   createTestMedication,
-  createTestMedicationStartEvent,
 } from "../utils/test-fixtures";
 import {
   daysAgo,
@@ -23,7 +22,6 @@ import {
   tomorrow,
   assertResultOk,
   assertResultErr,
-  assertSortedAscending,
   waitForTimestampDifference,
 } from "../utils/test-helpers";
 import {
@@ -273,7 +271,9 @@ describe("Temporal Invariants", () => {
       const sameDate = daysAgo(5);
       const sameRecordedAt = new Date("2024-01-01T10:00:00Z");
 
-      // NOTE has priority 1, MedicationStart has priority 2
+      // Per spec: NOTE events don't use priority-based ordering.
+      // When NOTE and non-NOTE events have same timestamps, non-NOTE events come first.
+      // So MedicationStart (priority 3) should come before NOTE (no priority).
       const medicationEvent = await createTestEvent({
         clinicalRecordId: clinicalRecord.id,
         eventDate: sameDate,
@@ -294,8 +294,8 @@ describe("Temporal Invariants", () => {
       const timeline = assertResultOk(result);
 
       const ids = timeline.events.map((e) => e.eventIdentifier);
-      // NOTE (priority 1) should come before MedicationStart (priority 2)
-      expect(ids.indexOf(noteEvent.id)).toBeLessThan(ids.indexOf(medicationEvent.id));
+      // MedicationStart (non-NOTE) should come before NOTE (per spec: non-NOTE events come first when timestamps match)
+      expect(ids.indexOf(medicationEvent.id)).toBeLessThan(ids.indexOf(noteEvent.id));
     });
 
     it("uses event_identifier as final tiebreaker (tier 4)", async () => {
@@ -357,8 +357,7 @@ describe("Temporal Invariants", () => {
 
       // Get initial order
       const result1 = await getFullTimeline(patient.id, "ascending");
-      const timeline1 = assertResultOk(result1);
-      const initialOrder = timeline1.events.map((e) => e.eventIdentifier);
+      assertResultOk(result1);
 
       // Add a new event in the middle
       await createTestEvent({
@@ -482,7 +481,7 @@ describe("Temporal Invariants", () => {
   // ===========================================================================
   describe("INV-TEMP-07: No History Rewriting via Backdating", () => {
     it("backdated event does not modify existing events", async () => {
-      const { patient, clinicalRecord } = await createCompletePatientSetup();
+      const { clinicalRecord } = await createCompletePatientSetup();
 
       // Create existing event
       const existingEvent = await createTestEvent({
@@ -627,6 +626,95 @@ describe("Temporal Invariants", () => {
 
       const error = assertResultErr(result);
       expect(error.code).toBe("MISSING_REQUIRED_FIELDS");
+    });
+
+    it("allows future dates for MedicationChange events (per INC-14)", async () => {
+      const { clinicalRecord } = await createCompletePatientSetup();
+
+      // Create an active medication first
+      const medication = await createTestMedication({
+        clinicalRecordId: clinicalRecord.id,
+        prescriptionIssueDate: daysAgo(30),
+      });
+
+      // Change dosage with future effective date
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // 7 days in the future
+
+      const { changeMedication } = await import("@/domain/medications/medication-service");
+      const result = await changeMedication({
+        medicationId: medication.id,
+        newDosage: 100,
+        effectiveDate: futureDate,
+        changeReason: "Planned dose increase",
+      });
+
+      // Should succeed (future dates allowed for MedicationChange)
+      assertResultOk(result);
+
+      // Verify event was created
+      const events = await testPrisma.clinicalEvent.findMany({
+        where: {
+          clinicalRecordId: clinicalRecord.id,
+          eventType: ClinicalEventType.MedicationChange,
+        },
+      });
+
+      expect(events.length).toBeGreaterThan(0);
+      const changeEvent = events[0];
+      expect(changeEvent.eventDate.getTime()).toBeGreaterThan(new Date().getTime());
+
+      // Verify event is filtered from timeline (future events not shown)
+      const timelineResult = await getFullTimeline(clinicalRecord.patientId, "descending");
+      assertResultOk(timelineResult);
+      const futureEvents = timelineResult.data.events.filter(
+        (e) => e.eventIdentifier === changeEvent.id
+      );
+      expect(futureEvents.length).toBe(0); // Should be filtered out
+    });
+
+    it("allows future dates for MedicationPrescriptionIssued events (per INC-14)", async () => {
+      const { clinicalRecord } = await createCompletePatientSetup();
+
+      // Create an active medication first
+      const medication = await createTestMedication({
+        clinicalRecordId: clinicalRecord.id,
+        prescriptionIssueDate: daysAgo(30),
+      });
+
+      // Issue prescription with future date
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 14); // 14 days in the future
+
+      const { issuePrescription } = await import("@/domain/medications/medication-service");
+      const result = await issuePrescription({
+        medicationId: medication.id,
+        prescriptionIssueDate: futureDate,
+        comments: "Future prescription",
+      });
+
+      // Should succeed (future dates allowed for MedicationPrescriptionIssued)
+      assertResultOk(result);
+
+      // Verify event was created
+      const events = await testPrisma.clinicalEvent.findMany({
+        where: {
+          clinicalRecordId: clinicalRecord.id,
+          eventType: ClinicalEventType.MedicationPrescriptionIssued,
+        },
+      });
+
+      expect(events.length).toBeGreaterThan(0);
+      const prescriptionEvent = events[0];
+      expect(prescriptionEvent.eventDate.getTime()).toBeGreaterThan(new Date().getTime());
+
+      // Verify event is filtered from timeline (future events not shown)
+      const timelineResult = await getFullTimeline(clinicalRecord.patientId, "descending");
+      assertResultOk(timelineResult);
+      const futureEvents = timelineResult.data.events.filter(
+        (e) => e.eventIdentifier === prescriptionEvent.id
+      );
+      expect(futureEvents.length).toBe(0); // Should be filtered out
     });
   });
 

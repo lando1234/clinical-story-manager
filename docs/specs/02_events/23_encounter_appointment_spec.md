@@ -2,13 +2,15 @@
 
 ## Overview
 
-Este documento define formalmente el comportamiento funcional de los eventos de tipo **Encounter** asociados a turnos agendados (Appointments) en el sistema de Historias Clínicas Psiquiátricas.
+> **Referencia de terminología:** Este documento utiliza la terminología estándar definida en [`09_terminology_glossary.md`](../00_foundation/09_terminology_glossary.md). Términos clave: **Encuentro clínico**, **Evento NOTE**, **Nota Clínica**, **Turno agendado**, **Evento Encounter**.
 
-Esta especificación establece las reglas de creación, visibilidad temporal y relación con la timeline clínica para eventos Encounter derivados de turnos, preservando la integridad de la narrativa clínica longitudinal.
+Este documento define formalmente el comportamiento funcional de los eventos de tipo **Encounter** asociados a Turnos agendados (Appointments) en el sistema de Historias Clínicas Psiquiátricas.
+
+Esta especificación establece las reglas de creación, visibilidad temporal y relación con la timeline clínica para eventos Encounter derivados de Turnos agendados, preservando la integridad de la narrativa clínica longitudinal.
 
 **Principio central (no negociable):**
-- Los eventos Encounter derivados de turnos SOLO deben mostrarse en la timeline si la fecha del turno ya pasó.
-- Los turnos futuros NO forman parte de la timeline clínica.
+- Los eventos Encounter derivados de Turnos agendados SOLO deben mostrarse en la timeline si la fecha del Turno agendado ya pasó.
+- Los Turnos agendados futuros NO forman parte de la timeline clínica.
 
 ---
 
@@ -16,37 +18,37 @@ Esta especificación establece las reglas de creación, visibilidad temporal y r
 
 ### 1.1 Función del Evento Encounter
 
-Un **Evento Encounter** es una instancia de `ClinicalEvent` con `eventType = Encounter` que representa que tuvo lugar un turno agendado.
+Un **Evento Encounter** es una instancia de `ClinicalEvent` con `eventType = Encounter` que representa que tuvo lugar un Turno agendado.
 
 **Características esenciales:**
 
 - Es una instancia de `ClinicalEvent` con `eventType = Encounter`
-- Representa el **hecho** de que ocurrió un turno agendado
-- Aparece en la Timeline del paciente **solo si la fecha del turno ya pasó**
+- Representa el **hecho** de que ocurrió un Turno agendado
+- Aparece en la Timeline del paciente **solo si la fecha del Turno agendado ya pasó**
 - Es inmutable desde el momento de su creación
-- Tiene una fecha de ocurrencia clínica (`eventDate`) que representa cuándo ocurrió el turno
+- Tiene una fecha de ocurrencia clínica (`eventDate`) que representa cuándo ocurrió el Turno agendado
 - Tiene una fecha de registro (`recordedAt`) que representa cuándo fue documentado en el sistema
-- Referencia al Appointment (turno) que lo generó
+- Referencia al Appointment (Turno agendado) que lo generó
 
 ### 1.2 Diferencia entre Encounter (turno) y NOTE (documentación)
 
 **Separación conceptual fundamental:**
 
-| Aspecto | Evento Encounter (turno) | Evento NOTE (documentación) |
+| Aspecto | Evento Encounter (Turno agendado) | Evento NOTE (documentación) |
 |---------|--------------------------|-----------------------------|
-| **Origen** | Appointment (turno agendado) | Note (nota clínica finalizada) |
-| **Representa** | El hecho de que ocurrió un turno | El hecho de que se documentó un encuentro |
+| **Origen** | Appointment (Turno agendado) | Note (nota clínica finalizada) |
+| **Representa** | El hecho de que ocurrió un Turno agendado | El hecho de que se documentó un Encuentro clínico |
 | **Contenido clínico** | NO contiene contenido clínico | Referencia a Nota que contiene documentación completa |
 | **Rol** | Administrativo/temporal | Clínico/documental |
-| **Visibilidad temporal** | Solo si fecha del turno ya pasó | Solo si Nota fue finalizada |
+| **Visibilidad temporal** | Solo si fecha del Turno agendado ya pasó | Solo si Nota fue finalizada |
 | **Relación con documentación** | Puede existir sin Nota asociada | Requiere Nota finalizada |
 
 **Principio de separación:**
 
-- **Encounter** representa **planificación ejecutada** (el turno ocurrió)
-- **NOTE** representa **documentación clínica** (el encuentro fue documentado)
-- Un turno puede ocurrir sin generar documentación (Nota)
-- Una Nota puede documentar un encuentro que no fue agendado previamente
+- **Encounter** representa **planificación ejecutada** (el Turno agendado ocurrió)
+- **NOTE** representa **documentación clínica** (el Encuentro clínico fue documentado)
+- Un Turno agendado puede ocurrir sin generar documentación (Nota)
+- Una Nota puede documentar un Encuentro clínico que no fue agendado previamente
 
 ### 1.3 Rol Administrativo vs Clínico
 
@@ -66,58 +68,59 @@ Un **Evento Encounter** es una instancia de `ClinicalEvent` con `eventType = Enc
 
 **Separación de responsabilidades:**
 
-- El Encounter responde: "¿Cuándo ocurrió el turno?"
-- El NOTE responde: "¿Qué se documentó del encuentro?"
+- El Encounter responde: "¿Cuándo ocurrió el Turno agendado?"
+- El NOTE responde: "¿Qué se documentó del Encuentro clínico?"
 
 ---
 
-## 2. Definición del Turno (Appointment)
+## 2. Definición del Turno Agendado (Appointment)
 
-### 2.1 Qué Representa un Turno
+### 2.1 Qué Representa un Turno Agendado
 
-Un **Turno** (Appointment) es una instancia de la entidad `Appointment` que representa una cita agendada entre el clínico y el paciente.
+Un **Turno agendado** (Appointment) es una instancia de la entidad `Appointment` que representa una cita agendada entre el clínico y el paciente.
 
 **Características esenciales:**
 
 - Es una entidad administrativa, no clínica
-- Representa una **intención** de encuentro futuro o un **registro** de encuentro pasado
+- Representa una **intención** de Encuentro clínico futuro o un **registro** de Encuentro clínico pasado
 - Tiene una fecha programada (`scheduledDate`) que puede estar en el futuro o en el pasado
 - Puede tener estado: Scheduled, Completed, Cancelled, NoShow
 - NO contiene documentación clínica
 - NO genera eventos automáticamente al crearse
 
-### 2.2 Qué NO Representa un Turno
+### 2.2 Qué NO Representa un Turno Agendado
 
-Un Turno **NO representa:**
+Un Turno agendado **NO representa:**
 
-- **Documentación clínica** — El turno no contiene observaciones, evaluaciones o planes
-- **Un encuentro documentado** — El turno puede existir sin Nota asociada
-- **Un evento clínico** — El turno en sí no es un evento en la timeline
-- **Un hecho ocurrido** — Los turnos futuros son planificación, no hechos
+- **Documentación clínica** — El Turno agendado no contiene observaciones, evaluaciones o planes
+- **Un Encuentro clínico documentado** — El Turno agendado puede existir sin Nota asociada
+- **Un evento clínico** — El Turno agendado en sí no es un evento en la timeline
+- **Un hecho ocurrido** — Los Turnos agendados futuros son planificación, no hechos
 - **Contenido clínico** — El campo `notes` del Appointment es administrativo, no clínico
 
 ### 2.3 Relación con el Tiempo (Futuro vs Pasado)
 
-**Turnos futuros:**
+**Turnos agendados futuros:**
 
-- Representan **planificación** de encuentros
+- Representan **planificación** de Encuentros clínicos
 - La fecha programada está en el futuro
-- **NO generan eventos Encounter**
-- **NO aparecen en la timeline**
-- Son información administrativa, no clínica
+- **SÍ generan eventos Encounter** inmediatamente al agendar
+- **NO aparecen en la timeline** hasta que la fecha pase (se ocultan)
+- Los eventos Encounter futuros existen en la base de datos pero se filtran en la visualización
+- Son información administrativa, pero el evento se crea para mantener consistencia
 
-**Turnos pasados:**
+**Turnos agendados pasados:**
 
-- Representan **turnos que ya ocurrieron**
+- Representan **Turnos agendados que ya ocurrieron**
 - La fecha programada está en el pasado
-- **Pueden generar eventos Encounter** (si se cumplen las condiciones)
-- **Pueden aparecer en la timeline** (si se cumplen las condiciones)
+- **Tienen eventos Encounter** (creados al agendar o al pasar la fecha)
+- **Aparecen en la timeline** (son visibles)
 - Son hechos ocurridos, no planificación
 
 **Principio temporal:**
 
-- **Futuro = Planificación** → No es parte de la timeline clínica
-- **Pasado = Hecho** → Puede ser parte de la timeline clínica
+- **Futuro = Planificación** → Evento existe pero se oculta en timeline
+- **Pasado = Hecho** → Evento visible en timeline
 
 ---
 
@@ -181,21 +184,22 @@ El Evento Encounter **NO contiene:**
 
 **Regla fundamental:**
 
-Un Evento Encounter se crea **automáticamente** cuando se cumplen **ambas** condiciones:
+Un Evento Encounter se crea **inmediatamente** al agendar el turno, independientemente de si la fecha es futura o pasada, cuando se cumple la condición:
 
-1. **La fecha programada del turno ya pasó** — `Appointment.scheduledDate <= fecha actual`
-2. **El turno no ha generado un Encounter previamente** — No existe un Evento Encounter con `sourceId = Appointment.id`
+1. **El turno no ha generado un Encounter previamente** — No existe un Evento Encounter con `sourceId = Appointment.id`
 
 **Momento de creación:**
 
-- **Opción A: Creación automática al pasar la fecha** — El sistema verifica periódicamente turnos cuya fecha pasó y crea eventos Encounter
-- **Opción B: Creación bajo demanda** — El evento se crea cuando se consulta la timeline y se detecta un turno pasado sin evento asociado
+- **Creación inmediata al agendar** — El sistema crea el evento Encounter tan pronto como se crea el Appointment
+- **Aplicable a turnos futuros y pasados** — No hay distinción temporal en la creación
+- **Visibilidad diferida para futuros** — Los eventos Encounter con fecha futura se crean pero se ocultan en la timeline hasta que la fecha pase
 
 **Garantía del sistema:**
 
-- Cada turno pasado genera **exactamente un** Evento Encounter
+- Cada turno genera **exactamente un** Evento Encounter al agendar
 - No se generan eventos duplicados
-- La creación es automática, no requiere intervención manual
+- La creación es automática e inmediata, no requiere intervención manual
+- Los eventos Encounter futuros existen en la base de datos pero se filtran en la visualización de la timeline
 
 ### 4.2 Relación Temporal entre Appointment y Encounter
 
@@ -225,9 +229,9 @@ Appointment.scheduledDate → Evento Encounter.eventDate
 
 **Casos especiales:**
 
-- **Turno cancelado antes de la fecha:** No genera Evento Encounter (el turno no ocurrió)
-- **Turno reprogramado antes de la fecha:** El nuevo turno puede generar su propio Encounter cuando pase su fecha
-- **Turno sin evento:** Un turno pasado sin evento Encounter indica que aún no se ha procesado (creación pendiente)
+- **Turno cancelado antes de la fecha:** El Evento Encounter asociado debe eliminarse (el turno no ocurrió)
+- **Turno reprogramado antes de la fecha:** El Evento Encounter original debe eliminarse y se crea uno nuevo con la nueva fecha
+- **Turno sin evento:** Un turno sin evento Encounter indica un error en el sistema (debería existir desde el agendamiento)
 
 ---
 
@@ -237,11 +241,9 @@ Appointment.scheduledDate → Evento Encounter.eventDate
 
 **Regla de visibilidad:**
 
-Un Evento Encounter aparece en la timeline **solo si** se cumplen **todas** estas condiciones:
+Un Evento Encounter aparece en la timeline **solo si** se cumple la condición:
 
-1. **El evento Encounter existe** — Fue creado por el sistema
-2. **La fecha del evento ya pasó** — `eventDate <= fecha actual`
-3. **El evento está asociado a un turno pasado** — `Appointment.scheduledDate <= fecha actual`
+1. **La fecha del evento ya pasó** — `eventDate <= fecha actual`
 
 **Condición equivalente:**
 
@@ -251,21 +253,24 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
 
 **Garantía del sistema:**
 
-- Los eventos Encounter con `eventDate` futura **nunca** aparecen en la timeline
+- Los eventos Encounter con `eventDate` futura **existen en la base de datos** pero **no aparecen en la timeline**
+- El filtrado es a nivel de visualización/consulta, no de creación
 - La timeline solo muestra hechos ocurridos, no eventos futuros
+- Los eventos Encounter futuros se hacen visibles automáticamente cuando su fecha pasa
 
 ### 5.2 Comportamiento de Turnos Futuros
 
 **Turnos futuros (scheduledDate > fecha actual):**
 
-- **NO generan eventos Encounter** — El sistema no crea eventos para turnos futuros
-- **NO aparecen en la timeline** — Los turnos futuros no son parte de la narrativa clínica
-- **Son información administrativa** — Existen para planificación, no para documentación histórica
+- **SÍ generan eventos Encounter** — El sistema crea el evento inmediatamente al agendar
+- **NO aparecen en la timeline** — Los eventos Encounter futuros se filtran en la visualización
+- **Existen en la base de datos** — Los eventos se persisten pero se ocultan hasta que la fecha pase
+- **Se hacen visibles automáticamente** — Cuando la fecha del turno pasa, el evento aparece en la timeline sin intervención
 
 **Principio de separación:**
 
-- **Planificación (futuro)** → No es parte de la timeline
-- **Hechos (pasado)** → Es parte de la timeline
+- **Planificación (futuro)** → Evento existe pero se oculta en timeline
+- **Hechos (pasado)** → Evento visible en timeline
 
 ### 5.3 Comportamiento de Turnos Pasados
 
@@ -283,9 +288,9 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
 **Independencia del estado del turno:**
 
 - El evento Encounter aparece en la timeline **independientemente** del estado del turno (Completed, NoShow, Cancelled)
-- Un turno con estado NoShow puede generar un Encounter si su fecha ya pasó
-- Un turno cancelado **antes** de su fecha no genera Encounter
-- Un turno cancelado **después** de su fecha puede tener un Encounter (si se creó antes de la cancelación)
+- Un turno con estado NoShow puede tener un Encounter visible si su fecha ya pasó
+- Un turno cancelado **antes** de su fecha no tiene Encounter (se elimina al cancelar)
+- Un turno cancelado **después** de su fecha mantiene su Encounter (inmutabilidad de eventos pasados)
 
 ---
 
@@ -298,17 +303,24 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
 1. **Clínico agenda un turno**
    - Se crea Appointment con `scheduledDate` en el futuro
    - Estado inicial: `Scheduled`
-   - **NO se crea Evento Encounter**
+   - **Se crea Evento Encounter inmediatamente**
 
-2. **Turno existe como planificación**
+2. **Evento Encounter se crea**
+   - `eventDate = Appointment.scheduledDate` (fecha futura)
+   - `eventType = Encounter`
+   - `sourceId = Appointment.id`
+   - `recordedAt = momento actual`
+   - **Evento se persiste en la base de datos**
+
+3. **Turno existe como planificación**
    - El turno es visible en calendario/agenda
-   - **NO aparece en timeline**
-   - **NO genera eventos**
+   - **Evento Encounter existe pero NO aparece en timeline** (filtrado por fecha futura)
+   - El evento está oculto hasta que la fecha pase
 
-3. **Sistema mantiene turno como administrativo**
-   - El turno es información de planificación
-   - No afecta la narrativa clínica
-   - No contamina la timeline con eventos futuros
+4. **Sistema mantiene separación temporal**
+   - El evento existe en la base de datos
+   - El evento se filtra en la visualización de la timeline
+   - No contamina la narrativa clínica con eventos futuros visibles
 
 ### 6.2 Llegada de la Fecha del Turno
 
@@ -318,20 +330,17 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
    - `Appointment.scheduledDate <= fecha actual`
    - El turno deja de ser futuro, ahora es pasado
 
-2. **Sistema detecta turno pasado**
-   - Verifica si existe Evento Encounter asociado
-   - Si no existe, crea el Evento Encounter automáticamente
+2. **Evento Encounter ya existe**
+   - El Evento Encounter fue creado al agendar
+   - No se requiere creación adicional
+   - El evento ya está en la base de datos
 
-3. **Evento Encounter se crea**
-   - `eventDate = Appointment.scheduledDate`
-   - `eventType = Encounter`
-   - `sourceId = Appointment.id`
-   - `recordedAt = momento actual`
-
-4. **Evento Encounter aparece en timeline**
+3. **Evento Encounter aparece en timeline**
+   - El evento ahora cumple la condición de visibilidad (`eventDate <= fecha actual`)
    - El evento es visible en la timeline del paciente
    - Se ordena según las reglas del Timeline Engine
    - Aparece en su posición cronológica correcta
+   - **No se requiere intervención del sistema** — el filtrado automático lo hace visible
 
 ### 6.3 Visualización en Timeline
 
@@ -339,7 +348,7 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
 
 1. **Sistema recupera eventos clínicos**
    - Incluye eventos NOTE, Medication, Hospitalization, etc.
-   - **Incluye eventos Encounter** con `eventDate <= fecha actual`
+   - **Incluye eventos Encounter** con `eventDate <= fecha actual` (filtrado de futuros)
 
 2. **Sistema ordena eventos**
    - Aplica reglas de ordenamiento del Timeline Engine
@@ -348,7 +357,7 @@ Evento Encounter visible en timeline ⟺ eventDate <= fecha actual
 3. **Sistema presenta timeline**
    - Muestra eventos en orden cronológico
    - Eventos Encounter aparecen en su posición temporal
-   - **NO muestra eventos Encounter futuros** (no existen)
+   - **NO muestra eventos Encounter futuros** (existen en BD pero se filtran en visualización)
 
 **Presentación del evento Encounter:**
 
@@ -547,33 +556,56 @@ Sin la regla de visibilidad temporal, la timeline podría mostrar:
 - El Encounter se genera automáticamente cuando la fecha pasa, independientemente de confirmación
 - El estado del turno (Completed, NoShow) puede reflejarse en la descripción del evento, pero no afecta su creación
 
-### 9.3 Cancelaciones
+### 9.3 Cancelaciones y Reprogramaciones de Turnos Futuros
+
+**Regla fundamental:**
+
+Cuando un turno futuro se cancela o se reprograma **antes de su fecha programada**, el Evento Encounter asociado debe eliminarse.
+
+**Cancelación de turno futuro:**
+
+1. **Turno futuro se cancela**
+   - El Appointment cambia su estado a `Cancelled`
+   - La fecha programada aún no ha pasado
+
+2. **Sistema elimina Evento Encounter**
+   - Se busca el Evento Encounter con `sourceId = Appointment.id`
+   - Si existe y `eventDate > fecha actual`, se elimina
+   - El turno cancelado no debe aparecer en la timeline
+
+**Reprogramación de turno futuro:**
+
+1. **Turno futuro se reprograma**
+   - El Appointment cambia su `scheduledDate` a una nueva fecha
+   - La fecha original aún no ha pasado
+
+2. **Sistema elimina Evento Encounter original**
+   - Se busca el Evento Encounter con `sourceId = Appointment.id`
+   - Si existe y la fecha original es futura, se elimina
+
+3. **Sistema crea nuevo Evento Encounter**
+   - Se crea un nuevo Evento Encounter con la nueva fecha programada
+   - El nuevo evento sigue las mismas reglas de creación y visibilidad
+
+**Garantía del sistema:**
+
+- Cada turno futuro tiene exactamente un Evento Encounter
+- Si un turno futuro se cancela/reprograma, el evento anterior se elimina
+- Los eventos Encounter de turnos pasados son inmutables (no se eliminan al cancelar/reprogramar)
+
+### 9.4 Cancelaciones y Reprogramaciones de Turnos Pasados
 
 **Fuera de alcance:**
 
-- Lógica de cancelación de turnos y su impacto en eventos Encounter
-- Cancelación de turnos pasados que ya generaron eventos
-- Manejo de turnos cancelados antes de su fecha
+- Cancelación de turnos pasados que ya generaron eventos visibles
+- Reprogramación de turnos pasados (el evento mantiene su fecha original por inmutabilidad)
+- Lógica específica de manejo de estados de turnos pasados
 
 **Nota:**
 
-- Los turnos cancelados **antes** de su fecha no generan eventos Encounter (el turno no ocurrió)
-- Los turnos cancelados **después** de su fecha pueden tener eventos Encounter si se crearon antes de la cancelación
-- La lógica específica de cancelación es responsabilidad del módulo de Appointments, no de esta especificación
-
-### 9.4 Reprogramaciones
-
-**Fuera de alcance:**
-
-- Lógica de reprogramación de turnos
-- Manejo de turnos reprogramados después de generar eventos Encounter
-- Creación de nuevos eventos para turnos reprogramados
-
-**Nota:**
-
-- Si un turno se reprograma **antes** de su fecha original, el nuevo turno puede generar su propio Encounter cuando pase su nueva fecha
-- Si un turno se reprograma **después** de generar un Encounter, el evento mantiene su fecha original (inmutabilidad)
-- La lógica específica de reprogramación es responsabilidad del módulo de Appointments
+- Los turnos pasados con eventos Encounter visibles mantienen sus eventos (inmutabilidad)
+- Si un turno pasado se cancela, el evento Encounter puede reflejar el estado en su descripción
+- La lógica específica de cancelación/reprogramación de turnos pasados es responsabilidad del módulo de Appointments
 
 ### 9.5 Asistencia / Inasistencia
 

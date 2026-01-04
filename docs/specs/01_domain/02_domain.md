@@ -104,7 +104,7 @@ Events include encounters, medication changes, hospitalizations, and other miles
 ### Relationships
 
 - A ClinicalEvent belongs to exactly one ClinicalRecord.
-- A ClinicalEvent may reference zero or one Note (for Encounter events).
+- A ClinicalEvent may reference zero or one Note (for NOTE events).
 - A ClinicalEvent may reference zero or one Medication (for Medication events).
 - A ClinicalEvent may reference zero or one PsychiatricHistory version (for History Update events).
 - Some event types (Hospitalization, Life Event, Other) are standalone with no entity reference.
@@ -195,6 +195,8 @@ Each Addendum preserves the integrity of the clinical record while allowing nece
 
 ### Functional Description
 
+> **Note:** This Medication entity definition reflects updates specified in [`22_cambios_medicacion_actualizacion.md`](../02_events/22_cambios_medicacion_actualizacion.md). Key changes include: elimination of `route` field, semantic renaming of `startDate` to `prescriptionIssueDate`, renaming of `prescribingReason` to `comments` (optional), and introduction of the `MedicationPrescriptionIssued` event type. See the update document for complete rationale and impact analysis.
+
 A Medication represents a pharmaceutical agent prescribed to the patient.
 
 The Medication entity tracks the complete lifecycle from initiation through discontinuation.
@@ -208,10 +210,9 @@ All medications, current and historical, remain visible in the patient's record.
 - Dosage
 - Dosage unit
 - Frequency
-- Route of administration
-- Start date
+- Prescription issue date
 - End date
-- Prescribing reason
+- Comments (optional)
 - Discontinuation reason
 - Status (active or discontinued)
 
@@ -222,8 +223,21 @@ All medications, current and historical, remain visible in the patient's record.
 
 ### Business Rules
 
-- A Medication must have a drug name, dosage, dosage unit, frequency, and start date.
-- Route of administration is optional.
+**Required Fields:**
+- A Medication must have the following required fields:
+  - Drug name (drug_name): Cannot be empty
+  - Dosage (dosage): Must be a positive value
+  - Dosage unit (dosage_unit): Cannot be empty
+  - Frequency (frequency): Cannot be empty
+  - Prescription issue date (prescription_issue_date): Must be a valid date, cannot be in the future
+
+**Optional Fields:**
+- Comments (comments): Optional field for additional notes about the prescription
+- End date (end_date): Optional, required only when discontinuing medication
+- Discontinuation reason (discontinuation_reason): Optional, required only when discontinuing medication
+- Predecessor ID (predecessor_id): Optional, used for linking dosage changes
+
+**Status and Lifecycle:**
 - A Medication without an end date is considered active.
 - Setting an end date changes the status to discontinued.
 - Discontinuing a Medication requires a discontinuation reason.

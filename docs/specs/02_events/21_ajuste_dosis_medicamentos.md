@@ -21,7 +21,6 @@ Los siguientes parámetros pueden ser modificados mediante un ajuste de dosis:
 - **Dosis** (`dosage`): Cantidad numérica del medicamento
 - **Unidad de dosis** (`dosageUnit`): Unidad de medida (mg, ml, tabletas, etc.)
 - **Frecuencia** (`frequency`): Intervalo de administración (diario, dos veces al día, etc.)
-- **Vía de administración** (`route`): Ruta de administración (oral, intramuscular, etc.)
 
 **Nota:** El nombre del medicamento (`drugName`) NO puede ser modificado mediante un ajuste. Un cambio de medicamento constituye una discontinuación y un nuevo inicio.
 
@@ -81,7 +80,7 @@ Para reconstruir el historial completo de un medicamento:
 |-------|------|-------------|------------|
 | `medicationId` | String (UUID) | Identificador del medicamento a ajustar | Debe existir y estar activo |
 | `newDosage` | Decimal | Nueva dosis numérica | > 0 |
-| `effectiveDate` | Date | Fecha efectiva del ajuste | No puede ser futura, no puede ser anterior a `startDate` del medicamento original |
+| `effectiveDate` | Date | Fecha efectiva del ajuste | No puede ser futura, no puede ser anterior a `prescriptionIssueDate` del medicamento original |
 | `changeReason` | String (opcional) | Razón clínica del ajuste | Si se proporciona, no puede estar vacío |
 
 ### 4.2 Datos de Entrada Opcionales
@@ -90,14 +89,13 @@ Para reconstruir el historial completo de un medicamento:
 |-------|------|-------------|-------------------|
 | `newDosageUnit` | String | Nueva unidad de dosis | Se mantiene la unidad del medicamento original |
 | `newFrequency` | String | Nueva frecuencia | Se mantiene la frecuencia del medicamento original |
-| `newRoute` | String | Nueva vía de administración | Se mantiene la vía del medicamento original |
 
 ### 4.3 Datos Derivados Automáticamente
 
 Los siguientes datos se derivan automáticamente del medicamento original:
 
 - `drugName`: Se mantiene idéntico al medicamento original
-- `prescribingReason`: Se mantiene idéntico al medicamento original
+- `comments`: Se mantiene idéntico al medicamento original (puede ser null)
 - `clinicalRecordId`: Se mantiene idéntico al medicamento original
 - `predecessorId`: Se establece como el ID del medicamento original
 
@@ -117,8 +115,7 @@ Antes del ajuste, el medicamento original tiene:
   dosage: 50.0,
   dosageUnit: "mg",
   frequency: "Una vez al día",
-  route: "Oral",
-  startDate: "2024-01-15",
+  prescriptionIssueDate: "2024-01-15",
   predecessorId: null,  // Es la versión inicial
   discontinuationReason: null
 }
@@ -133,7 +130,7 @@ Antes del ajuste, el medicamento original tiene:
 
 2. **Creación de nueva versión:**
    - Nuevo registro con `status = "Active"`
-   - `startDate` → `effectiveDate`
+   - `prescriptionIssueDate` → `effectiveDate`
    - `predecessorId` → ID del medicamento original
    - Parámetros ajustados según entrada
 
@@ -149,8 +146,7 @@ Después del ajuste, el medicamento original queda:
   dosage: 50.0,  // Inmutable
   dosageUnit: "mg",  // Inmutable
   frequency: "Una vez al día",  // Inmutable
-  route: "Oral",  // Inmutable
-  startDate: "2024-01-15",  // Inmutable
+  prescriptionIssueDate: "2024-01-15",  // Inmutable
   predecessorId: null,  // Inmutable
   discontinuationReason: "Dosage changed"
 }
@@ -168,8 +164,7 @@ La nueva versión creada tiene:
   dosage: 75.0,  // Ajustado
   dosageUnit: "mg",  // Mantenido o ajustado
   frequency: "Una vez al día",  // Mantenido o ajustado
-  route: "Oral",  // Mantenido o ajustado
-  startDate: "2024-02-15",  // effectiveDate
+  prescriptionIssueDate: "2024-02-15",  // effectiveDate
   predecessorId: "med-001",  // Vinculado al original
   discontinuationReason: null
 }
@@ -177,10 +172,10 @@ La nueva versión creada tiene:
 
 ### 5.5 Continuidad Temporal
 
-- El medicamento original cubre el período: `[startDate, endDate]`
+- El medicamento original cubre el período: `[prescriptionIssueDate, endDate]`
 - La nueva versión cubre el período: `[effectiveDate, ∞)` (hasta el próximo ajuste o discontinuación)
 - **No hay solapamiento:** `endDate` del original = `effectiveDate - 1 día`
-- **No hay brechas:** `startDate` de la nueva versión = `effectiveDate`
+- **No hay brechas:** `prescriptionIssueDate` de la nueva versión = `effectiveDate`
 
 ---
 
@@ -289,9 +284,8 @@ Ningún registro de medicamento puede ser modificado después de su creación, e
 - `dosage` (del registro original)
 - `dosageUnit` (del registro original)
 - `frequency` (del registro original)
-- `route` (del registro original)
-- `startDate`
-- `prescribingReason`
+- `prescriptionIssueDate`
+- `comments`
 - `predecessorId`
 - `createdAt`
 
@@ -321,11 +315,11 @@ if (effectiveDate > new Date()) {
 
 **Regla R-CONS-4: Fecha Efectiva Válida**
 
-La fecha efectiva del ajuste no puede ser anterior a la fecha de inicio del medicamento original.
+La fecha efectiva del ajuste no puede ser anterior a la fecha de emisión de receta del medicamento original.
 
 **Validación:**
 ```typescript
-if (effectiveDate < currentMedication.startDate) {
+if (effectiveDate < currentMedication.prescriptionIssueDate) {
   return error("INVALID_DATE_RANGE");
 }
 ```
@@ -565,7 +559,7 @@ Para navegar el historial:
    - medicationId existe
    - Medicamento está activo
    - effectiveDate no es futura
-   - effectiveDate >= startDate del original
+   - effectiveDate >= prescriptionIssueDate del original
    - newDosage > 0
    ↓
 3. Sistema inicia transacción atómica:
@@ -577,7 +571,7 @@ Para navegar el historial:
    ↓
 5. Sistema crea nueva versión:
    - status → Active
-   - startDate → effectiveDate
+   - prescriptionIssueDate → effectiveDate
    - predecessorId → ID del original
    - Parámetros ajustados según entrada
    ↓
@@ -619,7 +613,7 @@ if (effectiveDate > new Date()) {
 
 **Validación V4: Fecha Válida**
 ```typescript
-if (effectiveDate < medication.startDate) {
+if (effectiveDate < medication.prescriptionIssueDate) {
   return error("INVALID_DATE_RANGE");
 }
 ```
@@ -698,7 +692,7 @@ La operación completa se ejecuta en una transacción atómica para garantizar:
 
 **Validación:**
 - `effectiveDate < new Date()` ✓ (no es futura)
-- `effectiveDate >= medication.startDate` ✓ (después del inicio)
+- `effectiveDate >= medication.prescriptionIssueDate` ✓ (después de la emisión de receta)
 
 **Resultado:**
 - Ajuste documentado correctamente con fecha retroactiva
@@ -775,7 +769,7 @@ function getActiveMedicationOnDate(
   
   // Encontrar la versión activa en targetDate
   return versions.find(med => 
-    med.startDate <= targetDate &&
+    med.prescriptionIssueDate <= targetDate &&
     (med.endDate === null || med.endDate >= targetDate)
   ) || null;
 }

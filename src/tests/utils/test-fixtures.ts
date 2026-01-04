@@ -416,6 +416,18 @@ export async function createTestAppointment(
       notes: options.notes,
     },
   });
+  
+  // Generate Encounter event immediately (per spec 23_encounter_appointment_spec.md)
+  // This matches the behavior of AppointmentService.scheduleAppointment
+  try {
+    const { ensureEncounterEventForAppointment } = await import("@/domain/appointments/encounter-event-generator");
+    await ensureEncounterEventForAppointment(appointment.id);
+  } catch (error) {
+    // If event generation fails, log but don't fail test setup
+    // This can happen if clinical record doesn't exist yet
+    console.warn(`Failed to create Encounter event for test appointment ${appointment.id}:`, error);
+  }
+  
   return appointment;
 }
 

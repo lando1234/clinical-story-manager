@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { PrismaClient } from "@/generated/prisma";
 import {
   ClinicalEventType,
   SourceType,
@@ -9,6 +10,12 @@ import {
   validateTimelineEventInput,
 } from "@/types/timeline";
 import { DomainError, Result, ok, err } from "@/types/errors";
+
+// Type for Prisma transaction client (PrismaClient without transaction-related methods)
+type PrismaTransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 /**
  * TimelineEventEmitter - Creates ClinicalEvent records per write contracts.
@@ -34,9 +41,13 @@ import { DomainError, Result, ok, err } from "@/types/errors";
  * - event_identifier: System-generated unique identifier
  * - recorded_timestamp: Current system timestamp (assigned automatically)
  * - All events are immutable once created
+ * 
+ * @param input - Event creation input
+ * @param txClient - Optional Prisma transaction client. If provided, uses this client instead of the global prisma instance.
  */
 export async function createTimelineEvent(
-  input: CreateTimelineEventInput
+  input: CreateTimelineEventInput,
+  txClient?: PrismaTransactionClient
 ): Promise<Result<ClinicalEvent>> {
   // Validate input per ERROR-MISSING-DATA and ERROR-INVALID-DATA contracts
   const validation = validateTimelineEventInput(input);
@@ -48,8 +59,11 @@ export async function createTimelineEvent(
     );
   }
 
+  // Use transaction client if provided, otherwise use global prisma
+  const db = txClient || prisma;
+
   // Verify clinical record exists
-  const clinicalRecord = await prisma.clinicalRecord.findUnique({
+  const clinicalRecord = await db.clinicalRecord.findUnique({
     where: { id: input.clinicalRecordId },
   });
 
@@ -63,7 +77,7 @@ export async function createTimelineEvent(
   }
 
   // Create the event with proper source references based on sourceType
-  const event = await prisma.clinicalEvent.create({
+  const event = await db.clinicalEvent.create({
     data: {
       clinicalRecordId: input.clinicalRecordId,
       eventDate: input.eventDate,
@@ -250,11 +264,17 @@ export async function emitHistoryUpdateEvent(params: {
  *
  * Trigger: A ClinicalRecord entity is created.
  * Per spec: docs/21_foundational_timeline_event.md
+ * 
+ * @param params - Event parameters
+ * @param txClient - Optional Prisma transaction client. If provided, uses this client instead of the global prisma instance.
  */
-export async function emitFoundationalEvent(params: {
-  clinicalRecordId: string;
-  eventDate: Date;
-}): Promise<Result<ClinicalEvent>> {
+export async function emitFoundationalEvent(
+  params: {
+    clinicalRecordId: string;
+    eventDate: Date;
+  },
+  txClient?: PrismaTransactionClient
+): Promise<Result<ClinicalEvent>> {
   return createTimelineEvent({
     clinicalRecordId: params.clinicalRecordId,
     eventDate: params.eventDate,
@@ -263,7 +283,7 @@ export async function emitFoundationalEvent(params: {
     description: "Paciente incorporado al sistema. Este evento marca el inicio formal de la historia clínica documentada.",
     sourceType: null,
     sourceId: null,
-  });
+  }, txClient);
 }
 
 /**

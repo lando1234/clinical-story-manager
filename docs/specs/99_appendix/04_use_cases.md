@@ -386,13 +386,12 @@ The clinician has prescribed a new medication, changed a dosage, or discontinued
 2. The clinician enters the drug name.
 3. The clinician enters the dosage and dosage unit.
 4. The clinician enters the frequency.
-5. The clinician optionally enters the route of administration.
-6. The clinician enters the start date.
-7. The clinician enters the prescribing reason.
-8. The clinician confirms the medication entry.
-9. The system creates the Medication record with active status.
-10. The system generates a Medication Start clinical event.
-11. The event appears on the patient's timeline at the start date.
+5. The clinician enters the prescription issue date.
+6. The clinician optionally enters comments.
+7. The clinician confirms the medication entry.
+8. The system creates the Medication record with active status.
+9. The system generates a Medication Start clinical event.
+10. The event appears on the patient's timeline at the prescription issue date.
 
 ### Steps — Modify Dosage or Frequency
 
@@ -427,10 +426,9 @@ The clinician has prescribed a new medication, changed a dosage, or discontinued
 | Dosage | Required. Must be a positive value. |
 | Dosage unit | Required. |
 | Frequency | Required. |
-| Start date | Required. Must be a valid date. Cannot be in the future for new medications. |
-| Prescribing reason | Required. |
-| Route of administration | Optional. |
-| End date | Required for discontinuation. Must be on or after start date. |
+| Prescription issue date | Required. Must be a valid date. Cannot be in the future for new medications (MedicationStart). Note: Future dates are allowed for dose adjustments (MedicationChange) and new prescription issuances (MedicationPrescriptionIssued), but those events are filtered from timeline display until their date passes. |
+| Comments | Optional. |
+| End date | Required for discontinuation. Must be on or after prescription issue date. |
 | Discontinuation reason | Required for discontinuation. |
 
 ### Expected Outcome

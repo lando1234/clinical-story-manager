@@ -223,7 +223,9 @@ La fecha de emisión de receta (`prescriptionIssueDate`) representa el momento c
 
 **Validaciones:**
 - `prescriptionIssueDate` debe ser una fecha válida
-- `prescriptionIssueDate` no puede ser futura
+- `prescriptionIssueDate` no puede ser futura **para nuevas medicaciones (MedicationStart)**
+- **Excepción para ajustes (MedicationChange)**: La nueva `prescriptionIssueDate` puede ser futura. Los eventos con fecha futura se crean pero se filtran de la timeline hasta que la fecha pase.
+- **Excepción para nuevas recetas (MedicationPrescriptionIssued)**: La fecha de emisión puede ser futura. Los eventos con fecha futura se crean pero se filtran de la timeline hasta que la fecha pase.
 - Para ajustes: la nueva `prescriptionIssueDate` debe ser posterior o igual a la `prescriptionIssueDate` del predecesor
 
 ---

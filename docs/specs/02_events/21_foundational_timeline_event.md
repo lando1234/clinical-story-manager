@@ -308,7 +308,7 @@ El Evento Fundacional es completamente inmutable una vez creado.
 
 **No hay excepciones:**
 
-A diferencia de otros eventos que podrían tener mecanismos de corrección (addenda, versiones), el Evento Fundacional no tiene mecanismos de modificación.
+Como todos los eventos en el sistema, el Evento Fundacional es completamente inmutable. Los mecanismos de corrección (addenda, versiones) se aplican a las entidades fuente (Notes, Medications), no a los eventos mismos. Todos los eventos, incluido el Evento Fundacional, siguen la misma regla de inmutabilidad sin excepciones.
 
 **Justificación:**
 

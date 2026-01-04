@@ -147,11 +147,19 @@ For any event E:
 
 **INV-TEMP-09: Future events are prohibited**
 
-For any event E:
+For any event E, **except Encounter events**:
 - E.event_timestamp must be ≤ the current date at time of creation.
 - No mechanism may create or modify an event to have a future event_timestamp.
 
-**Rationale:** The timeline represents what has occurred, not what is planned.
+**Exception: Encounter Events**
+
+Encounter events may be created with future event_timestamp when appointments are scheduled. These events:
+- Are persisted in the database with future timestamps
+- Are filtered from timeline display until their event_timestamp has passed
+- Become visible automatically when their scheduled date passes
+- May be deleted if the appointment is cancelled or rescheduled before its date
+
+**Rationale:** The timeline represents what has occurred, not what is planned. Encounter events are an exception because they need to exist for appointments that are scheduled in the future, but they are filtered from display to maintain the principle that the timeline only shows past occurrences.
 
 ---
 
@@ -186,7 +194,7 @@ For any finalized Note N:
 
 For any Medication M with status = Discontinued:
 - All fields of M must remain unchanged after discontinuation.
-- M.start_date, M.end_date, M.discontinuation_reason must be preserved.
+- M.prescription_issue_date, M.end_date, M.discontinuation_reason must be preserved.
 
 **Rationale:** Medication history must reflect what was documented at discontinuation time.
 
@@ -278,7 +286,7 @@ These invariants ensure that derived clinical states are consistent with the und
 **INV-STATE-01: Active medications are consistent with lifecycle events**
 
 For any patient P at time T:
-- A medication M is active if and only if: M.start_date ≤ T AND (M.end_date IS NULL OR M.end_date > T).
+- A medication M is active if and only if: M.prescription_issue_date ≤ T AND (M.end_date IS NULL OR M.end_date > T).
 - The set of active medications must be deterministically derivable from the timeline.
 
 **Rationale:** Contract G-STATE-3. Medication state must be accurately reconstructable.
@@ -296,20 +304,42 @@ For any medication M at any point in time:
 
 ---
 
-**INV-STATE-03: Medication end date is on or after start date**
+**INV-STATE-03: Medication end date is on or after prescription issue date**
 
-For any medication M with both start_date and end_date:
-- M.end_date ≥ M.start_date.
-- Zero-duration medications (same-day start and stop) are permitted.
+For any medication M with both prescription_issue_date and end_date:
+- M.end_date ≥ M.prescription_issue_date.
+- Zero-duration medications (same-day prescription issue and stop) are permitted.
 - Negative-duration medications are prohibited.
 
 **Rationale:** Temporal logic. Medications cannot end before they begin.
 
 ---
 
+**INV-STATE-04: Medication Prescription Issued requires active medication**
+
+For any MedicationPrescriptionIssued event E:
+- E.source_identifier must reference a Medication M with status = Active.
+- E.event_timestamp must be after M.prescription_issue_date.
+- If M.status = Discontinued, no MedicationPrescriptionIssued events can be created for M.
+
+**Rationale:** Contract WRITE-EVENT-MEDICATION-PRESCRIPTION-ISSUED. Prescription issuance is only valid for active medications and must occur after the initial prescription.
+
+---
+
+**INV-STATE-05: Medication Prescription Issued does not modify Medication**
+
+For any MedicationPrescriptionIssued event E referencing Medication M:
+- M remains unchanged after event creation (dosage, frequency, dosage_unit, prescription_issue_date unchanged).
+- E does not create a new Medication version.
+- E is an independent event that documents prescription renewal without modifying treatment parameters.
+
+**Rationale:** MedicationPrescriptionIssued is distinct from MedicationChange. It documents prescription issuance without posological modifications.
+
+---
+
 ### 4.2 Psychiatric History State Consistency
 
-**INV-STATE-04: Exactly one current psychiatric history version**
+**INV-STATE-06: Exactly one current psychiatric history version**
 
 For any patient P with psychiatric history:
 - Exactly one version V must have is_current = true.
@@ -320,7 +350,7 @@ For any patient P with psychiatric history:
 
 ---
 
-**INV-STATE-05: Current version has no superseded_at timestamp**
+**INV-STATE-07: Current version has no superseded_at timestamp**
 
 For any PsychiatricHistory version V where is_current = true:
 - V.superseded_at must be NULL.
@@ -330,7 +360,7 @@ For any PsychiatricHistory version V where is_current = true:
 
 ---
 
-**INV-STATE-06: Historical version determination is unambiguous**
+**INV-STATE-08: Historical version determination is unambiguous**
 
 For any target_date D and patient P:
 - At most one psychiatric history version was current on date D.
@@ -342,13 +372,13 @@ For any target_date D and patient P:
 
 ### 4.3 Note and Encounter State Consistency
 
-**INV-STATE-07: Finalized notes have exactly one encounter event**
+**INV-STATE-09: Finalized notes have exactly one NOTE event**
 
 For any Note N with status = Finalized:
-- Exactly one Encounter event E must exist with source_identifier = N.id.
+- Exactly one NOTE event E must exist with source_identifier = N.id.
 - The event must have been created at or after N.finalized_at.
 
-**Rationale:** Contract WRITE-EVENT-ENCOUNTER. Note finalization triggers event creation.
+**Rationale:** Contract WRITE-EVENT-NOTE. Note finalization triggers event creation.
 
 ---
 
@@ -428,9 +458,11 @@ For any event creation attempt:
 **INV-CONTRACT-05: Invalid data is rejected deterministically**
 
 For any event creation attempt with invalid data:
-- Future event_timestamp must result in INVALID_TIMESTAMP_FUTURE error.
+- Future event_timestamp (except for Encounter events) must result in INVALID_TIMESTAMP_FUTURE error.
 - Invalid event_type must result in INVALID_EVENT_TYPE error.
-- Medication end_date before start_date must result in INVALID_DATE_RANGE error.
+- Medication end_date before prescription_issue_date must result in INVALID_DATE_RANGE error.
+- MedicationPrescriptionIssued event_timestamp before or equal to Medication.prescription_issue_date must result in INVALID_PRESCRIPTION_DATE_MUST_BE_AFTER_FIRST error.
+- MedicationPrescriptionIssued for inactive medication must result in MEDICATION_NOT_ACTIVE_CANNOT_ISSUE_PRESCRIPTION error.
 - Invalid source reference must result in INVALID_SOURCE_REFERENCE error.
 
 **Rationale:** Contract ERROR-INVALID-DATA. Validation is deterministic.
@@ -563,7 +595,8 @@ These scenarios must be tested to prevent regressions. Each scenario corresponds
 | Backdate event by one week | Event appears at correct chronological position | INV-TEMP-06 |
 | Backdate event by one year | Event appears at correct position; recorded_timestamp reflects today | INV-TEMP-06, INV-TEMP-10 |
 | Add backdated event between existing events | Existing event order preserved; new event inserted | INV-TEMP-05, INV-TEMP-06 |
-| Attempt to create future-dated event | Operation rejected with INVALID_TIMESTAMP_FUTURE | INV-TEMP-09, INV-CONTRACT-05 |
+| Attempt to create future-dated event (non-Encounter) | Operation rejected with INVALID_TIMESTAMP_FUTURE | INV-TEMP-09, INV-CONTRACT-05 |
+| Attempt to create future-dated Encounter event | Event created successfully, filtered from timeline until date passes | INV-TEMP-09 (exception), WRITE-EVENT-ENCOUNTER |
 
 ### 7.3 Concurrent Event Creation
 
@@ -580,7 +613,9 @@ These scenarios must be tested to prevent regressions. Each scenario corresponds
 |----------|-------------------|-------------------|
 | Event creation without timestamp | MISSING_EVENT_TIMESTAMP error | INV-CONTRACT-04 |
 | Event creation without title | MISSING_TITLE error | INV-CONTRACT-04 |
-| Medication creation without start_date | MISSING_EVENT_TIMESTAMP error (via medication validation) | INV-CONTRACT-04 |
+| Medication creation without prescription_issue_date | MISSING_EVENT_TIMESTAMP error (via medication validation) | INV-CONTRACT-04 |
+| MedicationPrescriptionIssued for inactive medication | MEDICATION_NOT_ACTIVE_CANNOT_ISSUE_PRESCRIPTION error | INV-STATE-04, INV-CONTRACT-05 |
+| MedicationPrescriptionIssued with date before first prescription | INVALID_PRESCRIPTION_DATE_MUST_BE_AFTER_FIRST error | INV-STATE-04, INV-CONTRACT-05 |
 | Query for non-existent patient | PATIENT_NOT_FOUND error | INV-CONTRACT-07 |
 | Query for non-existent event | EVENT_NOT_FOUND error | INV-CONTRACT-08 |
 
@@ -591,7 +626,8 @@ These scenarios must be tested to prevent regressions. Each scenario corresponds
 | Query current state after medication discontinuation | Medication absent from active list | INV-STATE-01, INV-STATE-02 |
 | Query historical state on date before medication start | Medication absent from that date's active list | INV-STATE-01 |
 | Query historical state between medication start and stop | Medication present in that date's active list | INV-STATE-01 |
-| Query psychiatric history on date between versions | Correct version returned for that date | INV-STATE-06 |
+| MedicationPrescriptionIssued event created for active medication | Event appears in timeline; Medication unchanged | INV-STATE-04, INV-STATE-05 |
+| Query psychiatric history on date between versions | Correct version returned for that date | INV-STATE-08 |
 
 ### 7.6 Correction Workflows
 

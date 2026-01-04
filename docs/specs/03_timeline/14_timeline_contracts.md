@@ -81,8 +81,14 @@ Events are ordered by:
 
 1. Event timestamp (ascending)
 2. Recorded timestamp (ascending)
-3. Event type priority (ascending: Encounter=1, Medication Start=2, Medication Change=3, Medication Stop=4, Hospitalization=5, Life Event=6, History Update=7, Other=8)
+3. Event type priority (ascending: Foundational=0, Encounter=2, Medication Start=3, Medication Change=4, Medication Prescription Issued=5, Medication Stop=6, Hospitalization=7, Life Event=8, History Update=9, Other=10)
 4. Event identifier (ascending)
+
+**Special Case: NOTE Events**
+
+NOTE events do not use priority-based ordering. When comparing NOTE events:
+- If both events are NOTE: compare by recorded timestamp, then identifier
+- If one event is NOTE and one is not: compare by recorded timestamp first; if equal, the non-NOTE event's priority determines order
 
 **Implication:** Consumers can predict ordering for any set of events by applying this algorithm.
 
@@ -140,7 +146,7 @@ For any past date, the engine can reconstruct the clinical state as it existed o
 
 #### G-STATE-3: Medication State Accuracy
 
-Active medications at any point in time are those where start_date ≤ target_date AND (end_date IS NULL OR end_date > target_date).
+Active medications at any point in time are those where prescription_issue_date ≤ target_date AND (end_date IS NULL OR end_date > target_date).
 
 **Implication:** Consumers can calculate medication state independently using this formula.
 
@@ -259,8 +265,8 @@ Events are ordered according to the four-tier ordering rules (G-ORD-2), with ord
       dosage: Decimal
       dosage_unit: Text
       frequency: Text
-      start_date: Date
-      prescribing_reason: Text
+      prescription_issue_date: Date
+      comments: Text (nullable)
     },
     ...
   ]
@@ -331,7 +337,7 @@ Events are ordered according to the four-tier ordering rules (G-ORD-2), with ord
       dosage: Decimal
       dosage_unit: Text
       frequency: Text
-      start_date: Date
+      prescription_issue_date: Date
     },
     ...
   ]
@@ -354,7 +360,7 @@ Events are ordered according to the four-tier ordering rules (G-ORD-2), with ord
 
 Events are included where: `event_timestamp ≤ target_date`
 
-Medications are included where: `start_date ≤ target_date AND (end_date IS NULL OR end_date > target_date)`
+Medications are included where: `prescription_issue_date ≤ target_date AND (end_date IS NULL OR end_date > target_date)`
 
 Psychiatric history version is included where: `created_at ≤ target_date AND (superseded_at IS NULL OR superseded_at > target_date)`
 
@@ -486,7 +492,7 @@ Psychiatric history version is included where: `created_at ≤ target_date AND (
 
 Varies by source type:
 
-**For Encounter events (source_type = Note):**
+**For NOTE events (source_type = Note):**
 ```
 {
   source_type: "Note"
@@ -522,10 +528,9 @@ Varies by source type:
     dosage: Decimal
     dosage_unit: Text
     frequency: Text
-    route: Text (nullable)
-    start_date: Date
+    prescription_issue_date: Date
     end_date: Date (nullable)
-    prescribing_reason: Text
+    comments: Text (nullable)
     discontinuation_reason: Text (nullable)
     status: MedicationStatus
     predecessor_identifier: Identifier (nullable)
@@ -571,11 +576,72 @@ Varies by source type:
 
 ## 4. Write Contracts (Event Ingestion)
 
-### 4.1 Contract: Create Event from Note Finalization
+### 4.1 Contract: Create Foundational Event
 
-**Contract Identifier:** WRITE-EVENT-ENCOUNTER
+**Contract Identifier:** WRITE-EVENT-FOUNDATIONAL
 
-**Purpose:** Generate an Encounter event when a Note is finalized.
+**Purpose:** Generate a Foundational event when a ClinicalRecord is created.
+
+#### Trigger
+
+A ClinicalRecord entity is created.
+
+#### Required Information
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| clinical_record_identifier | ClinicalRecord.id | Links event to patient's clinical record |
+| event_timestamp | ClinicalRecord.created_at or Patient.registration_date | Date marking the start of documented clinical history |
+
+#### Automatically Assigned
+
+| Field | Value |
+|-------|-------|
+| event_identifier | System-generated unique identifier |
+| event_type | Constant: "Foundational" |
+| title | Constant: "Inicio de Historia Clínica" (or localized equivalent) |
+| description | Constant: "Paciente incorporado al sistema. Este evento marca el inicio formal de la historia clínica documentada." (or localized equivalent) |
+| source_type | Constant: null (no source entity) |
+| source_identifier | Constant: null (no source entity) |
+| recorded_timestamp | Current system timestamp |
+
+#### Timestamp Rules
+
+- event_timestamp must not be in the future.
+- recorded_timestamp is assigned at moment of event creation.
+- event_timestamp typically equals ClinicalRecord.created_at or Patient.registration_date.
+
+#### Validation Expectations
+
+Before event creation, the following must be true:
+
+- ClinicalRecord exists and is valid.
+- ClinicalRecord does not already have a Foundational event (one per ClinicalRecord).
+
+#### Conflict Handling
+
+- If a ClinicalRecord already has a Foundational event, no new event should be created.
+- The engine should prevent duplicate Foundational events for the same ClinicalRecord.
+
+#### Post-Conditions
+
+- Exactly one Foundational event exists for the ClinicalRecord.
+- The event is immediately queryable.
+- The event is immutable from this point.
+- The event has priority 0 (highest), ensuring it always appears first in timeline ordering.
+
+---
+
+### 4.2 Contract: Create Event from Note Finalization
+
+**Contract Identifier:** WRITE-EVENT-NOTE
+
+**Purpose:** Generate a NOTE event when a Note is finalized.
+
+**Related Specifications:**
+
+- [`22_nota_clinica_evento_note.md`](../02_events/22_nota_clinica_evento_note.md) — Defines the separation between Nota Clínica (Note entity) and Evento NOTE (timeline event), establishing that finalized Notes generate NOTE events (not Encounter events).
+- [`21_evento_encuentro_nota_clinica.md`](../02_events/21_evento_encuentro_nota_clinica.md) — Provides context on the distinction between clinical encounters and their documentation.
 
 #### Trigger
 
@@ -597,7 +663,7 @@ A Note entity transitions from status=Draft to status=Finalized.
 | Field | Value |
 |-------|-------|
 | event_identifier | System-generated unique identifier |
-| event_type | Constant: "Encounter" |
+| event_type | Constant: "NOTE" |
 | recorded_timestamp | Current system timestamp |
 
 #### Timestamp Rules
@@ -618,17 +684,83 @@ Before event creation, the following must be true:
 #### Conflict Handling
 
 - If a Note is finalized multiple times (should not occur), duplicate events may be created. Prevention is an application concern.
-- The engine does not detect or prevent duplicate encounter events.
+- The engine does not detect or prevent duplicate NOTE events.
 
 #### Post-Conditions
 
-- Exactly one Encounter event exists for the finalized Note.
+- Exactly one NOTE event exists for the finalized Note.
 - The event is immediately queryable.
 - The event is immutable from this point.
 
 ---
 
-### 4.2 Contract: Create Event from Medication Creation
+### 4.3 Contract: Create Event from Appointment
+
+**Contract Identifier:** WRITE-EVENT-ENCOUNTER
+
+**Purpose:** Generate an Encounter event immediately when an Appointment is created/scheduled, regardless of whether the scheduled date is in the future or past.
+
+**Note:** This contract is an exception to the general rule prohibiting future event timestamps. Encounter events may have future timestamps but are filtered from timeline display until their scheduled date passes.
+
+**Related Specifications:**
+
+- [`23_encounter_appointment_spec.md`](../02_events/23_encounter_appointment_spec.md) — Defines Encounter events derived from Appointments (scheduled appointments), including creation rules, visibility rules for future-dated events, and the distinction from NOTE events.
+
+#### Trigger
+
+An Appointment entity is created, and no Encounter event exists yet for this Appointment.
+
+#### Required Information
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| clinical_record_identifier | Appointment.patient.clinical_record_id | Links event to patient |
+| event_timestamp | Appointment.scheduled_date | Scheduled date of appointment (may be in the future) |
+| title | Derived from Appointment.appointment_type | e.g., "Follow-up appointment" |
+| description | Optional summary | May include appointment status (Completed, NoShow) |
+| source_type | Constant: "Appointment" | Identifies source entity type |
+| source_identifier | Appointment.id | Reference to source appointment |
+
+#### Automatically Assigned
+
+| Field | Value |
+|-------|-------|
+| event_identifier | System-generated unique identifier |
+| event_type | Constant: "Encounter" |
+| recorded_timestamp | Current system timestamp |
+
+#### Timestamp Rules
+
+- event_timestamp must equal Appointment.scheduled_date.
+- **event_timestamp may be in the future** (exception to general rule for Encounter events only).
+- recorded_timestamp is assigned at moment of event creation.
+- Events with future event_timestamp are persisted but filtered from timeline queries until event_timestamp <= current date.
+
+#### Validation Expectations
+
+Before event creation, the following must be true:
+
+- No Encounter event exists with source_identifier = Appointment.id.
+- Appointment.appointment_type is a valid enumeration value.
+- **Note:** Appointment.scheduled_date may be in the future (unlike other event types).
+
+#### Conflict Handling
+
+- If an Appointment's scheduled date changes after an Encounter event is created, the event maintains its original event_timestamp (immutability) for past events.
+- For future appointments, if the scheduled date changes before the event becomes visible, the original event should be deleted and a new one created with the new date.
+- The engine does not detect or prevent duplicate Encounter events from the same Appointment if created through different code paths.
+
+#### Post-Conditions
+
+- Exactly one Encounter event exists for the Appointment (once created).
+- The event is immediately queryable.
+- The event is immutable from this point.
+
+**Note:** This contract is different from WRITE-EVENT-NOTE. Encounter events represent scheduled appointments that occurred, while NOTE events represent documented clinical encounters.
+
+---
+
+### 4.4 Contract: Create Event from Medication Creation
 
 **Contract Identifier:** WRITE-EVENT-MEDICATION-START
 
@@ -643,9 +775,9 @@ A new Medication entity is created with status=Active.
 | Field | Source | Description |
 |-------|--------|-------------|
 | clinical_record_identifier | Medication.clinical_record_id | Links event to patient |
-| event_timestamp | Medication.start_date | Clinical date of medication start |
+| event_timestamp | Medication.prescription_issue_date | Clinical date of medication start |
 | title | Derived | e.g., "Started Sertraline 50mg" |
-| description | Medication.prescribing_reason | Why medication was started |
+| description | Medication.comments (optional) | Optional comments about the prescription |
 | source_type | Constant: "Medication" | Identifies source entity type |
 | source_identifier | Medication.id | Reference to source medication |
 
@@ -659,15 +791,15 @@ A new Medication entity is created with status=Active.
 
 #### Timestamp Rules
 
-- event_timestamp must equal Medication.start_date.
+- event_timestamp must equal Medication.prescription_issue_date.
 - event_timestamp must not be in the future.
 
 #### Validation Expectations
 
 - Medication.drug_name is not empty.
 - Medication.dosage is a positive value.
-- Medication.start_date is a valid date not in the future.
-- Medication.prescribing_reason is not empty.
+- Medication.prescription_issue_date is a valid date not in the future (future dates are only allowed for MedicationChange and MedicationPrescriptionIssued events, which are filtered from timeline until their date passes).
+- description may be empty if comments are not provided.
 
 #### Conflict Handling
 
@@ -676,7 +808,68 @@ A new Medication entity is created with status=Active.
 
 ---
 
-### 4.3 Contract: Create Event from Medication Change
+### 4.5 Contract: Create Event from Medication Prescription Issued
+
+**Contract Identifier:** WRITE-EVENT-MEDICATION-PRESCRIPTION-ISSUED
+
+**Purpose:** Generate a Medication Prescription Issued event when a new prescription is issued for an active medication without modifying posological parameters.
+
+#### Trigger
+
+A clinician explicitly issues a new prescription for an existing Medication entity with status=Active.
+
+#### Required Information
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| clinical_record_identifier | Medication.clinical_record_id | Links event to patient |
+| event_timestamp | Prescription issue date (provided by clinician) | Clinical date of prescription issuance |
+| title | Derived | e.g., "New prescription issued: Sertraline 50mg" |
+| description | Optional reason or notes | Optional comments about the prescription issuance |
+| source_type | Constant: "Medication" | Identifies source entity type |
+| source_identifier | Medication.id | Reference to active medication |
+
+#### Automatically Assigned
+
+| Field | Value |
+|-------|-------|
+| event_identifier | System-generated unique identifier |
+| event_type | Constant: "MedicationPrescriptionIssued" |
+| recorded_timestamp | Current system timestamp |
+
+#### Timestamp Rules
+
+- event_timestamp equals the prescription issue date provided by the clinician.
+- event_timestamp must be after Medication.prescription_issue_date (date of first prescription).
+- **event_timestamp may be in the future** (exception to general rule for MedicationPrescriptionIssued events only).
+- recorded_timestamp is assigned at moment of event creation.
+- Events with future event_timestamp are persisted but filtered from timeline queries until event_timestamp <= current date.
+
+#### Validation Expectations
+
+Before event creation, the following must be true:
+
+- Medication.status is Active.
+- Medication exists and belongs to the same clinical record.
+- event_timestamp is after Medication.prescription_issue_date.
+- **Note:** event_timestamp may be in the future (unlike MedicationStart events).
+- description may be empty (comments are optional).
+
+#### Conflict Handling
+
+- Multiple prescription issuances for the same medication on the same date are permitted (e.g., multiple prescriptions issued during the same day).
+- The engine does not validate clinical appropriateness of prescription renewals.
+
+#### Post-Conditions
+
+- Exactly one MedicationPrescriptionIssued event exists for this prescription issuance.
+- The event is immediately queryable.
+- The event is immutable from this point.
+- The Medication entity remains unchanged (no modification to dosage, frequency, or other parameters).
+
+---
+
+### 4.6 Contract: Create Event from Medication Change
 
 **Contract Identifier:** WRITE-EVENT-MEDICATION-CHANGE
 
@@ -691,7 +884,7 @@ A new Medication entity is created with predecessor_id referencing a discontinue
 | Field | Source | Description |
 |-------|--------|-------------|
 | clinical_record_identifier | Medication.clinical_record_id | Links event to patient |
-| event_timestamp | New Medication.start_date | Effective date of change |
+| event_timestamp | New Medication.prescription_issue_date | Effective date of change |
 | title | Derived | e.g., "Changed Sertraline from 50mg to 100mg" |
 | description | Reason for change | May reference original discontinuation reason |
 | source_type | Constant: "Medication" | Identifies source entity type |
@@ -707,18 +900,21 @@ A new Medication entity is created with predecessor_id referencing a discontinue
 
 #### Timestamp Rules
 
-- event_timestamp equals the new Medication.start_date.
+- event_timestamp equals the new Medication.prescription_issue_date.
 - The predecessor Medication.end_date should be the day before event_timestamp.
+- **event_timestamp may be in the future** (exception to general rule for MedicationChange events only).
+- Events with future event_timestamp are persisted but filtered from timeline queries until event_timestamp <= current date.
 
 #### Validation Expectations
 
 - predecessor_id references a valid, discontinued Medication.
 - The predecessor belongs to the same clinical record.
-- New Medication.start_date is on or after predecessor.start_date.
+- New Medication.prescription_issue_date is on or after predecessor.prescription_issue_date.
+- **Note:** New Medication.prescription_issue_date may be in the future (unlike MedicationStart events).
 
 ---
 
-### 4.4 Contract: Create Event from Medication Discontinuation
+### 4.7 Contract: Create Event from Medication Discontinuation
 
 **Contract Identifier:** WRITE-EVENT-MEDICATION-STOP
 
@@ -750,7 +946,7 @@ A Medication entity transitions from status=Active to status=Discontinued.
 #### Timestamp Rules
 
 - event_timestamp equals Medication.end_date.
-- Medication.end_date must be on or after Medication.start_date.
+- Medication.end_date must be on or after Medication.prescription_issue_date.
 - event_timestamp must not be in the future.
 
 #### Validation Expectations
@@ -760,7 +956,7 @@ A Medication entity transitions from status=Active to status=Discontinued.
 
 ---
 
-### 4.5 Contract: Create Event from Psychiatric History Update
+### 4.7 Contract: Create Event from Psychiatric History Update
 
 **Contract Identifier:** WRITE-EVENT-HISTORY-UPDATE
 
@@ -801,7 +997,7 @@ Version 1 (initial psychiatric history created with patient) does NOT generate a
 
 ---
 
-### 4.6 Contract: Create Manual Event
+### 4.8 Contract: Create Manual Event
 
 **Contract Identifier:** WRITE-EVENT-MANUAL
 
@@ -849,7 +1045,7 @@ Direct clinician action to create a Hospitalization, Life Event, or Other event.
 
 ---
 
-### 4.7 Late Entry Handling
+### 4.9 Late Entry Handling
 
 All write contracts support backdated event timestamps.
 
@@ -1062,9 +1258,9 @@ If provided data is invalid:
 
 | Invalid Data | Engine Response |
 |--------------|-----------------|
-| event_timestamp in the future | Reject with error: `INVALID_TIMESTAMP_FUTURE` |
+| event_timestamp in the future (except Encounter events) | Reject with error: `INVALID_TIMESTAMP_FUTURE` |
 | event_type not in enumeration | Reject with error: `INVALID_EVENT_TYPE` |
-| Medication end_date before start_date | Reject with error: `INVALID_DATE_RANGE` |
+| Medication end_date before prescription_issue_date | Reject with error: `INVALID_DATE_RANGE` |
 | Source reference to non-existent entity | Reject with error: `INVALID_SOURCE_REFERENCE` |
 
 Event creation is blocked until valid data is provided.
@@ -1087,7 +1283,7 @@ The engine detects and reports the following conflicts:
 |---------------|-----------|----------|
 | Duplicate event identifier | System-generated identifiers prevent this | N/A |
 | Medication end before start | Validated | `INVALID_DATE_RANGE` |
-| Future event timestamp | Validated | `INVALID_TIMESTAMP_FUTURE` |
+| Future event timestamp (except Encounter) | Validated | `INVALID_TIMESTAMP_FUTURE` |
 
 #### Conflicts NOT Detected
 
@@ -1213,6 +1409,13 @@ These contracts define the complete interface between the Timeline Engine and al
 5. **Stability** — Contracts remain valid throughout MVP lifecycle.
 
 Consumers implementing against these contracts can be confident in timeline behavior without knowledge of engine internals.
+
+---
+
+## Related Documents
+
+- **Timeline Engine Specification:** [`13_timeline_engine.md`](13_timeline_engine.md)
+- **Medication Module Updates:** [`22_cambios_medicacion_actualizacion.md`](../02_events/22_cambios_medicacion_actualizacion.md) — Specifies changes to Medication model and introduction of `MedicationPrescriptionIssued` event type
 
 ---
 

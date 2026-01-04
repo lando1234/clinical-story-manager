@@ -1,12 +1,13 @@
 /**
  * Encounter Event Generator
  *
- * Generates Encounter events automatically for appointments whose scheduled date has passed.
+ * Generates Encounter events immediately when appointments are created/scheduled.
  * Per spec: docs/23_encounter_appointment_spec.md
  *
  * This service ensures that:
- * - Each past appointment generates exactly one Encounter event
- * - Events are created only when the appointment date has passed
+ * - Each appointment generates exactly one Encounter event immediately upon creation
+ * - Events are created regardless of whether the appointment date is in the future or past
+ * - Future events exist in the database but are filtered from timeline display
  * - No duplicate events are created
  */
 
@@ -57,10 +58,11 @@ function getEncounterDescription(
 }
 
 /**
- * Ensures Encounter event exists for a specific appointment if its date has passed.
+ * Ensures Encounter event exists for a specific appointment.
+ * Creates the event immediately, regardless of whether the appointment date is in the future or past.
  * 
  * @param appointmentId - The appointment ID
- * @returns true if event was created or already exists, false if appointment date is in the future
+ * @returns true if event was created or already exists
  */
 export async function ensureEncounterEventForAppointment(
   appointmentId: string
@@ -72,17 +74,6 @@ export async function ensureEncounterEventForAppointment(
 
   if (!appointment) {
     throw new Error(`Appointment ${appointmentId} not found`);
-  }
-
-  // Check if appointment date has passed
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const appointmentDate = new Date(appointment.scheduledDate);
-  appointmentDate.setHours(0, 0, 0, 0);
-
-  // Only create event if appointment date has passed
-  if (appointmentDate > today) {
-    return { created: false };
   }
 
   // Check if Encounter event already exists for this appointment
@@ -104,7 +95,7 @@ export async function ensureEncounterEventForAppointment(
     throw new Error(`Clinical record not found for patient ${appointment.patientId}`);
   }
 
-  // Generate event
+  // Generate event (regardless of whether date is in future or past)
   const title = getAppointmentTypeTitle(appointment.appointmentType);
   const description = getEncounterDescription(
     appointment.appointmentType,
@@ -128,24 +119,20 @@ export async function ensureEncounterEventForAppointment(
 }
 
 /**
- * Ensures Encounter events exist for all past appointments of a patient.
+ * Ensures Encounter events exist for all appointments of a patient.
  * 
- * This function is called when querying the timeline to ensure all past appointments
- * have their corresponding Encounter events.
+ * This function is called when querying the timeline to ensure all appointments
+ * (both past and future) have their corresponding Encounter events.
  * 
  * @param patientId - The patient ID
  */
 export async function ensureEncounterEventsForPatient(
   patientId: string
 ): Promise<void> {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999); // End of today
-
-  // Find all past appointments without Encounter events
-  const pastAppointments = await prisma.appointment.findMany({
+  // Find all appointments without Encounter events (both past and future)
+  const appointments = await prisma.appointment.findMany({
     where: {
       patientId,
-      scheduledDate: { lte: today },
     },
   });
 
@@ -162,7 +149,7 @@ export async function ensureEncounterEventsForPatient(
       clinicalRecordId,
       sourceType: SourceType.Appointment,
       eventType: ClinicalEventType.Encounter,
-      sourceId: { in: pastAppointments.map((a) => a.id) },
+      sourceId: { in: appointments.map((a) => a.id) },
     },
     select: { sourceId: true },
   });
@@ -171,8 +158,8 @@ export async function ensureEncounterEventsForPatient(
     existingEvents.map((e) => e.sourceId).filter((id): id is string => id !== null)
   );
 
-  // Create events for appointments that don't have them
-  for (const appointment of pastAppointments) {
+  // Create events for appointments that don't have them (both past and future)
+  for (const appointment of appointments) {
     if (existingAppointmentIds.has(appointment.id)) {
       continue;
     }
@@ -192,4 +179,50 @@ export async function ensureEncounterEventsForPatient(
       description,
     });
   }
+}
+
+/**
+ * Deletes Encounter event for a future appointment when it is cancelled or rescheduled.
+ * 
+ * This function should be called when:
+ * - A future appointment is cancelled
+ * - A future appointment is rescheduled (before its original date)
+ * 
+ * @param appointmentId - The appointment ID
+ * @returns true if event was deleted, false if no event existed or appointment date has passed
+ */
+export async function deleteEncounterEventForFutureAppointment(
+  appointmentId: string
+): Promise<{ deleted: boolean }> {
+  // Get appointment
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+
+  if (!appointment) {
+    throw new Error(`Appointment ${appointmentId} not found`);
+  }
+
+  // Check if appointment date is in the future
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const appointmentDate = new Date(appointment.scheduledDate);
+  appointmentDate.setHours(0, 0, 0, 0);
+
+  // Only delete if appointment date is in the future
+  // Past appointments' events are immutable
+  if (appointmentDate <= today) {
+    return { deleted: false };
+  }
+
+  // Find and delete Encounter event
+  const deleted = await prisma.clinicalEvent.deleteMany({
+    where: {
+      sourceType: SourceType.Appointment,
+      sourceId: appointmentId,
+      eventType: ClinicalEventType.Encounter,
+    },
+  });
+
+  return { deleted: deleted.count > 0 };
 }

@@ -32,6 +32,10 @@ import {
   emitAppointmentUpdated,
   emitAppointmentCancelled,
 } from "./events";
+import {
+  ensureEncounterEventForAppointment,
+  deleteEncounterEventForFutureAppointment,
+} from "./encounter-event-generator";
 
 /**
  * Appointment Service class.
@@ -79,6 +83,18 @@ export class AppointmentService {
 
     // Create the appointment
     const appointment = await this.repository.create(input);
+
+    // Create Encounter event immediately (regardless of whether date is future or past)
+    try {
+      await ensureEncounterEventForAppointment(appointment.id);
+    } catch (error) {
+      // Log error but don't fail appointment creation
+      // Event creation can be retried later
+      console.error(
+        `Failed to create Encounter event for appointment ${appointment.id}:`,
+        error
+      );
+    }
 
     // Emit domain event
     emitAppointmentScheduled(appointment);
@@ -143,8 +159,37 @@ export class AppointmentService {
     // Capture previous values for the event
     const previousValues = this.capturePreviousValues(existingAppointment, input);
 
+    // Check if scheduled date is changing and if it's a future appointment
+    const isDateChanging = input.scheduledDate !== undefined &&
+      input.scheduledDate.getTime() !== existingAppointment.scheduledDate.getTime();
+    const wasFuture = existingAppointment.scheduledDate > new Date();
+
+    // If a future appointment is being rescheduled, delete the old Encounter event
+    if (isDateChanging && wasFuture) {
+      try {
+        await deleteEncounterEventForFutureAppointment(appointmentId);
+      } catch (error) {
+        // Log error but don't fail appointment update
+        console.error(
+          `Failed to delete Encounter event for rescheduled appointment ${appointmentId}:`,
+          error
+        );
+      }
+    }
+
     // Update the appointment
     const updatedAppointment = await this.repository.update(appointmentId, input);
+
+    // Create new Encounter event with new date (if date changed or if it didn't exist)
+    try {
+      await ensureEncounterEventForAppointment(updatedAppointment.id);
+    } catch (error) {
+      // Log error but don't fail appointment update
+      console.error(
+        `Failed to create Encounter event for updated appointment ${updatedAppointment.id}:`,
+        error
+      );
+    }
 
     // Emit domain event
     emitAppointmentUpdated(updatedAppointment, previousValues, input);
@@ -193,11 +238,27 @@ export class AppointmentService {
       };
     }
 
+    // Check if appointment is in the future before cancelling
+    const isFuture = existingAppointment.scheduledDate > new Date();
+
     // Cancel the appointment
     const cancelledAppointment = await this.repository.cancel(
       appointmentId,
       input.reason
     );
+
+    // Delete Encounter event if appointment was in the future
+    if (isFuture) {
+      try {
+        await deleteEncounterEventForFutureAppointment(appointmentId);
+      } catch (error) {
+        // Log error but don't fail cancellation
+        console.error(
+          `Failed to delete Encounter event for cancelled appointment ${appointmentId}:`,
+          error
+        );
+      }
+    }
 
     // Emit domain event
     emitAppointmentCancelled(cancelledAppointment, input.reason);

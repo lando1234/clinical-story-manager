@@ -66,7 +66,7 @@ The psychiatric history can be updated but all versions are retained.
 
 The system tracks current and past psychiatric medications.
 
-Each medication entry includes: drug name, dosage, dosage unit, frequency, start date, end date, prescribing reason, and discontinuation reason. Route of administration is optional.
+Each medication entry includes: drug name, dosage, dosage unit, frequency, prescription issue date, end date, comments (optional), and discontinuation reason.
 
 The medication list reflects the complete pharmacological timeline.
 

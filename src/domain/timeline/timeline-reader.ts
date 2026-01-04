@@ -16,6 +16,7 @@ import {
   ClinicalEventType,
   SourceType,
   NoteStatus,
+  Prisma,
 } from "@/generated/prisma";
 import { DomainError, Result, ok, err } from "@/types/errors";
 import { EVENT_TYPE_PRIORITY } from "@/types/timeline";
@@ -62,8 +63,12 @@ function toTimelineEvent(event: ClinicalEvent): TimelineEvent {
  * ORDER BY:
  * 1. event_timestamp ASC
  * 2. recorded_timestamp ASC
- * 3. event_type_priority ASC
+ * 3. event_type_priority ASC (NOTE events skip this step)
  * 4. event_identifier ASC
+ *
+ * Special handling for NOTE events:
+ * - NOTE events are ordered chronologically without priority
+ * - When comparing NOTE with non-NOTE events, priority is only used for non-NOTE events
  *
  * Since Prisma cannot order by enum priority in the database,
  * we apply a stable sort on the result set.
@@ -78,7 +83,27 @@ function applyFourTierOrdering(events: ClinicalEvent[]): ClinicalEvent[] {
     const recordedCompare = a.recordedAt.getTime() - b.recordedAt.getTime();
     if (recordedCompare !== 0) return recordedCompare;
 
-    // 3. Event type priority
+    // 3. Event type priority (special handling for NOTE events)
+    // NOTE events don't use priority - they're ordered purely by timestamp
+    if (a.eventType === ClinicalEventType.NOTE && b.eventType === ClinicalEventType.NOTE) {
+      // Both are NOTE: compare by identifier only (recorded timestamp already compared)
+      return a.id.localeCompare(b.id);
+    }
+
+    if (a.eventType === ClinicalEventType.NOTE || b.eventType === ClinicalEventType.NOTE) {
+      // One is NOTE, one is not: if recorded timestamps are equal,
+      // non-NOTE event's priority determines order
+      if (a.eventType === ClinicalEventType.NOTE) {
+        // a is NOTE, b is not: b's priority determines order (non-NOTE comes before NOTE)
+        // Since NOTE has no priority, non-NOTE events with same timestamps come first
+        return 1; // NOTE comes after non-NOTE with same timestamps
+      } else {
+        // b is NOTE, a is not: a's priority determines order
+        return -1; // non-NOTE comes before NOTE with same timestamps
+      }
+    }
+
+    // Neither is NOTE: use standard priority comparison
     const priorityA = EVENT_TYPE_PRIORITY[a.eventType];
     const priorityB = EVENT_TYPE_PRIORITY[b.eventType];
     const priorityCompare = priorityA - priorityB;
@@ -159,19 +184,42 @@ export async function getFullTimeline(
   // Ensure Encounter events exist for past appointments
   await ensureEncounterEventsForPatient(patientId);
 
-  // Get current date for filtering future Encounter events
+  // Get current date for filtering future events
   const today = new Date();
   today.setHours(23, 59, 59, 999); // End of today
 
   // Fetch all events with basic DB ordering (will refine with stable sort)
-  // Filter: Exclude Encounter events with future dates
+  // Filter: Exclude Encounter, MedicationChange, and MedicationPrescriptionIssued events with future dates
+  // Note: Per INC-14 resolution, MedicationChange and MedicationPrescriptionIssued events may have future dates
+  // but are filtered from timeline display until their date passes (similar to Encounter events).
+  // Foundational, NOTE, MedicationStart, MedicationStop, and other events are always included.
   const events = await prisma.clinicalEvent.findMany({
     where: {
       clinicalRecordId: record.clinicalRecordId,
       OR: [
-        { eventType: { not: ClinicalEventType.Encounter } },
+        // Include all events that are not Encounter, MedicationChange, or MedicationPrescriptionIssued
+        {
+          eventType: {
+            notIn: [
+              ClinicalEventType.Encounter,
+              ClinicalEventType.MedicationChange,
+              ClinicalEventType.MedicationPrescriptionIssued,
+            ],
+          },
+        },
+        // Include Encounter events only if date has passed
         {
           eventType: ClinicalEventType.Encounter,
+          eventDate: { lte: today },
+        },
+        // Include MedicationChange events only if date has passed
+        {
+          eventType: ClinicalEventType.MedicationChange,
+          eventDate: { lte: today },
+        },
+        // Include MedicationPrescriptionIssued events only if date has passed
+        {
+          eventType: ClinicalEventType.MedicationPrescriptionIssued,
           eventDate: { lte: today },
         },
       ],
@@ -264,67 +312,116 @@ export async function getFilteredTimeline(
   // Ensure Encounter events exist for past appointments
   await ensureEncounterEventsForPatient(patientId);
 
-  // Get current date for filtering future Encounter events
+  // Get current date for filtering future events
   const today = new Date();
   today.setHours(23, 59, 59, 999); // End of today
 
   // Build base where clause
-  const baseConditions: any[] = [
-    // Include all non-Encounter events
-    { eventType: { not: ClinicalEventType.Encounter } },
+  // Per INC-14 resolution, MedicationChange and MedicationPrescriptionIssued events may have future dates
+  // but are filtered from timeline display until their date passes (similar to Encounter events).
+  const baseConditions: Prisma.ClinicalEventWhereInput[] = [
+    // Include all events that are not Encounter, MedicationChange, or MedicationPrescriptionIssued
+    {
+      eventType: {
+        notIn: [
+          ClinicalEventType.Encounter,
+          ClinicalEventType.MedicationChange,
+          ClinicalEventType.MedicationPrescriptionIssued,
+        ],
+      },
+    },
     // Include Encounter events only if date has passed
     {
       eventType: ClinicalEventType.Encounter,
       eventDate: { lte: today },
     },
+    // Include MedicationChange events only if date has passed
+    {
+      eventType: ClinicalEventType.MedicationChange,
+      eventDate: { lte: today },
+    },
+    // Include MedicationPrescriptionIssued events only if date has passed
+    {
+      eventType: ClinicalEventType.MedicationPrescriptionIssued,
+      eventDate: { lte: today },
+    },
   ];
 
   // Apply event type filter if provided
+  // Per INC-14, need to handle Encounter, MedicationChange, and MedicationPrescriptionIssued specially
+  // as they may have future dates that need filtering
   if (eventTypes && eventTypes.length > 0) {
-    const hasEncounter = eventTypes.includes(ClinicalEventType.Encounter);
-    const otherTypes = eventTypes.filter((t) => t !== ClinicalEventType.Encounter);
+    const futureFilteredTypes: ClinicalEventType[] = [
+      ClinicalEventType.Encounter,
+      ClinicalEventType.MedicationChange,
+      ClinicalEventType.MedicationPrescriptionIssued,
+    ];
+    const hasFutureFilteredTypes = eventTypes.filter((t) =>
+      futureFilteredTypes.includes(t)
+    );
+    const otherTypes = eventTypes.filter(
+      (t) => !futureFilteredTypes.includes(t)
+    );
 
-    if (hasEncounter && otherTypes.length > 0) {
-      // Filter: Include other types OR Encounter (past only)
-      baseConditions[0] = { eventType: { in: otherTypes } };
-      baseConditions[1] = {
+    // Rebuild baseConditions based on what's requested
+    baseConditions.length = 0;
+
+    if (otherTypes.length > 0) {
+      baseConditions.push({ eventType: { in: otherTypes } });
+    }
+
+    // Add conditions for future-filtered types that are requested
+    if (hasFutureFilteredTypes.includes(ClinicalEventType.Encounter)) {
+      baseConditions.push({
         eventType: ClinicalEventType.Encounter,
         eventDate: { lte: today },
-      };
-    } else if (hasEncounter) {
-      // Only Encounter events (past only)
-      baseConditions[0] = {
-        eventType: ClinicalEventType.Encounter,
+      });
+    }
+    if (hasFutureFilteredTypes.includes(ClinicalEventType.MedicationChange)) {
+      baseConditions.push({
+        eventType: ClinicalEventType.MedicationChange,
         eventDate: { lte: today },
-      };
-      baseConditions.pop(); // Remove second condition
-    } else {
-      // Only other types
-      baseConditions[0] = { eventType: { in: otherTypes } };
-      baseConditions.pop(); // Remove Encounter condition
+      });
+    }
+    if (
+      hasFutureFilteredTypes.includes(
+        ClinicalEventType.MedicationPrescriptionIssued
+      )
+    ) {
+      baseConditions.push({
+        eventType: ClinicalEventType.MedicationPrescriptionIssued,
+        eventDate: { lte: today },
+      });
     }
   }
 
   // Build where clause
-  const whereClause: any = {
+  const whereClause: Prisma.ClinicalEventWhereInput = {
     clinicalRecordId: record.clinicalRecordId,
     OR: baseConditions,
   };
 
-  // Apply date range filter - need to combine with Encounter date filter
+  // Apply date range filter - need to combine with future-filtered event types
+  // Per INC-14, MedicationChange and MedicationPrescriptionIssued also need future date filtering
   if (dateRangeStart || dateRangeEnd) {
-    // For Encounter events, we need to ensure they're not in the future
+    const futureFilteredTypes = [
+      ClinicalEventType.Encounter,
+      ClinicalEventType.MedicationChange,
+      ClinicalEventType.MedicationPrescriptionIssued,
+    ];
+
+    // For future-filtered event types, we need to ensure they're not in the future
     // and also respect the date range filter
-    const encounterDateFilter: any = { lte: today };
+    const futureFilteredDateFilter: Prisma.DateTimeFilter = { lte: today };
     if (dateRangeStart) {
-      encounterDateFilter.gte = dateRangeStart;
+      futureFilteredDateFilter.gte = dateRangeStart;
     }
     if (dateRangeEnd) {
-      encounterDateFilter.lte = dateRangeEnd < today ? dateRangeEnd : today;
+      futureFilteredDateFilter.lte = dateRangeEnd < today ? dateRangeEnd : today;
     }
 
     // For other events, apply date range normally
-    const otherDateFilter: any = {};
+    const otherDateFilter: Prisma.DateTimeFilter = {};
     if (dateRangeStart) {
       otherDateFilter.gte = dateRangeStart;
     }
@@ -333,11 +430,19 @@ export async function getFilteredTimeline(
     }
 
     // Update base conditions to include date filters
+    const futureFilteredTypesForDateFilter: ClinicalEventType[] = [
+      ClinicalEventType.Encounter,
+      ClinicalEventType.MedicationChange,
+      ClinicalEventType.MedicationPrescriptionIssued,
+    ];
     baseConditions.forEach((condition, index) => {
-      if (condition.eventType === ClinicalEventType.Encounter) {
+      if (
+        condition.eventType &&
+        futureFilteredTypesForDateFilter.includes(condition.eventType as ClinicalEventType)
+      ) {
         baseConditions[index] = {
           ...condition,
-          eventDate: encounterDateFilter,
+          eventDate: futureFilteredDateFilter,
         };
       } else if (Object.keys(otherDateFilter).length > 0) {
         baseConditions[index] = {
