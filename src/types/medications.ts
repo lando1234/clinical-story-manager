@@ -28,7 +28,6 @@ export interface ChangeMedicationInput {
 
 /**
  * Input for stopping a medication.
- * Per spec: discontinuationReason is optional.
  */
 export interface StopMedicationInput {
   medicationId: string;
@@ -93,7 +92,9 @@ export function validateStopMedicationInput(
   if (input.endDate < medication.prescriptionIssueDate) {
     reasons.push("End date cannot be before prescription issue date");
   }
-  // discontinuationReason is optional per spec - removed validation
+  if (!input.discontinuationReason || input.discontinuationReason.trim() === "") {
+    reasons.push("Discontinuation reason is required");
+  }
 
   if (reasons.length === 0) {
     return { valid: true };

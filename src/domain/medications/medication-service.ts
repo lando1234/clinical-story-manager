@@ -281,8 +281,7 @@ export async function stopMedication(
   }
 
   // Discontinue the medication
-  // Per spec: discontinuationReason is optional, use default if not provided
-  const reason = input.discontinuationReason?.trim() || 'Suspensión de medicamento';
+  const reason = input.discontinuationReason?.trim() ?? "";
   
   const discontinuedMedication = await prisma.medication.update({
     where: { id: input.medicationId },
