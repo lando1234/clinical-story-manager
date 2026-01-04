@@ -40,6 +40,7 @@ function mapEventType(eventType: ClinicalEventType): UIEventType {
     Encounter: 'Turno',
     MedicationStart: 'Inicio de Medicación',
     MedicationChange: 'Cambio de Medicación',
+    MedicationPrescriptionIssued: 'Nueva Receta Emitida',
     MedicationStop: 'Suspensión de Medicación',
     Hospitalization: 'Hospitalización',
     LifeEvent: 'Evento Vital',

@@ -16,19 +16,24 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Generate Prisma Client
-console.log('Generating Prisma Client...');
-try {
-  execSync('npx prisma generate', { 
-    stdio: 'inherit',
-    env: { ...process.env }
-  });
-  console.log('✓ Prisma Client generated successfully');
-} catch (error) {
-  console.error('✗ ERROR: Failed to generate Prisma Client');
-  console.error('✗ This build will fail. Prisma Client is required for the application to compile.');
-  console.error('✗ Error details:', error.message);
-  process.exit(1);
+// Check if we should skip generation (when called from db:generate)
+const skipGenerate = process.argv.includes('--skip-generate');
+
+// Generate Prisma Client (unless skipped)
+if (!skipGenerate) {
+  console.log('Generating Prisma Client...');
+  try {
+    execSync('npx prisma generate', { 
+      stdio: 'inherit',
+      env: { ...process.env }
+    });
+    console.log('✓ Prisma Client generated successfully');
+  } catch (error) {
+    console.error('✗ ERROR: Failed to generate Prisma Client');
+    console.error('✗ This build will fail. Prisma Client is required for the application to compile.');
+    console.error('✗ Error details:', error.message);
+    process.exit(1);
+  }
 }
 
 // Verify Prisma Client was generated

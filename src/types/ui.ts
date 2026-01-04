@@ -13,6 +13,7 @@ export type EventType =
   | 'Turno'
   | 'Inicio de Medicación'
   | 'Cambio de Medicación'
+  | 'Nueva Receta Emitida'
   | 'Suspensión de Medicación'
   | 'Hospitalización'
   | 'Evento Vital'

@@ -17,6 +17,7 @@ import {
   SourceType,
   NoteStatus,
   Prisma,
+  Addendum,
 } from "@/generated/prisma";
 import { DomainError, Result, ok, err } from "@/types/errors";
 import { EVENT_TYPE_PRIORITY } from "@/types/timeline";
@@ -404,12 +405,6 @@ export async function getFilteredTimeline(
   // Apply date range filter - need to combine with future-filtered event types
   // Per INC-14, MedicationChange and MedicationPrescriptionIssued also need future date filtering
   if (dateRangeStart || dateRangeEnd) {
-    const futureFilteredTypes = [
-      ClinicalEventType.Encounter,
-      ClinicalEventType.MedicationChange,
-      ClinicalEventType.MedicationPrescriptionIssued,
-    ];
-
     // For future-filtered event types, we need to ensure they're not in the future
     // and also respect the date range filter
     const futureFilteredDateFilter: Prisma.DateTimeFilter = { lte: today };
@@ -670,7 +665,7 @@ export async function getEventSource(
       assessment: note.assessment,
       plan: note.plan,
       finalizedAt: note.finalizedAt,
-      addenda: note.addenda.map((a): AddendumData => ({
+      addenda: note.addenda.map((a: Addendum): AddendumData => ({
         addendumIdentifier: a.id,
         content: a.content,
         reason: a.reason,

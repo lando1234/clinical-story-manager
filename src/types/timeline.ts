@@ -73,13 +73,12 @@ export function validateEventDate(
   
   // Per INC-14: MedicationChange, MedicationPrescriptionIssued, and Encounter events
   // may have future dates. They are created but filtered from timeline display until date passes.
-  const futureAllowedTypes = [
-    ClinicalEventType.MedicationChange,
-    ClinicalEventType.MedicationPrescriptionIssued,
-    ClinicalEventType.Encounter,
-  ];
-  
-  if (eventType && futureAllowedTypes.includes(eventType)) {
+  if (
+    eventType &&
+    (eventType === ClinicalEventType.MedicationChange ||
+      eventType === ClinicalEventType.MedicationPrescriptionIssued ||
+      eventType === ClinicalEventType.Encounter)
+  ) {
     // Future dates are allowed for these event types
     return { valid: true };
   }
