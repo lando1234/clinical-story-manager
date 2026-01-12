@@ -139,3 +139,4 @@ Verifica que:
 - Para bases de datos locales, no se requiere SSL (se detecta automáticamente)
 
 
+

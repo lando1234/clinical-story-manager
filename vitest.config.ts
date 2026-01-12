@@ -22,5 +22,32 @@ export default defineConfig({
     include: ["src/tests/**/*.test.ts"],
     // Global test utilities
     globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "lcov"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+      exclude: [
+        // Generated / tooling
+        "src/generated/prisma/**",
+        "prisma/models/**",
+        "scripts/**",
+        ".next/**",
+        "next.config.ts",
+        "postcss.config.mjs",
+        "prisma.config.ts",
+        "vitest.config.ts",
+        // App Router + UI (se cubrirá en etapa posterior)
+        "src/app/**",
+        "src/ui/**",
+        // Static data / mocks
+        "src/data/mock.ts",
+        "src/data/patient-data.ts",
+        // Test harness & fixtures
+        "src/tests/**",
+        // Pure types without logic
+        "src/types/**",
+      ],
+    },
   },
 });
