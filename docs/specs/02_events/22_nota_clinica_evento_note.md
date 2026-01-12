@@ -25,7 +25,7 @@ La Nota Clínica es el documento que captura la documentación estructurada de u
 
 **Propósito fundamental:**
 
-1. **Documentar el contenido clínico** — Registra las observaciones, hallazgos, evaluaciones y planes del Encuentro clínico
+1. **Documentar el contenido clínico** — Registra la evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico (alineado con la entidad Medication), indicaciones y extras del Encuentro clínico
 2. **Preservar el razonamiento clínico** — Mantiene registro de qué pensó el clínico en el momento del Encuentro clínico
 3. **Cumplir requisitos legales** — Proporciona documentación médica completa y estructurada
 4. **Permitir revisión histórica** — Facilita la comprensión de decisiones clínicas pasadas
@@ -80,10 +80,13 @@ Una **Nota Clínica** es una instancia de la entidad `Note` que contiene la docu
 | **encounterDate** | Fecha | Fecha en que ocurrió el Encuentro clínico | Inmutable (una vez finalizada) |
 | **encounterType** | Enumeration | Tipo de Encuentro clínico | Inmutable (una vez finalizada) |
 | **status** | Enumeration | Draft o Finalized | Solo transición Draft → Finalized |
-| **subjective** | Texto (opcional) | Observaciones subjetivas del paciente | Inmutable (una vez finalizada) |
-| **objective** | Texto (opcional) | Hallazgos objetivos del clínico | Inmutable (una vez finalizada) |
-| **assessment** | Texto (opcional) | Evaluación clínica e interpretación | Inmutable (una vez finalizada) |
-| **plan** | Texto (opcional) | Plan de tratamiento y próximos pasos | Inmutable (una vez finalizada) |
+| **semiologicalEvaluation** | Texto (opcional) | Evaluación semiológica del Encuentro clínico | Inmutable (una vez finalizada) |
+| **extraConsultationData** | Texto (opcional) | Datos extras de la consulta | Inmutable (una vez finalizada) |
+| **diagnoses** | Texto (opcional) | Diagnósticos establecidos | Inmutable (una vez finalizada) |
+| **diagnosesUnderStudy** | Texto (opcional) | Diagnósticos en estudio | Inmutable (una vez finalizada) |
+| **pharmacologicalPlan** | Texto (opcional) | Plan Farmacológico (alineado con la entidad Medication) | Inmutable (una vez finalizada) |
+| **indications** | Texto (opcional) | Indicaciones clínicas | Inmutable (una vez finalizada) |
+| **extras** | Texto (opcional) | Información adicional o extras | Inmutable (una vez finalizada) |
 | **createdAt** | Timestamp | Cuándo fue creada la nota | Inmutable |
 | **finalizedAt** | Timestamp (opcional) | Cuándo fue finalizada la nota | Inmutable (una vez establecido) |
 
@@ -145,10 +148,13 @@ Una vez finalizada, los siguientes campos son **permanentemente inmutables**:
 
 - `encounterDate` — La fecha del Encuentro clínico no puede cambiar
 - `encounterType` — El tipo de Encuentro clínico no puede cambiar
-- `subjective` — Las observaciones subjetivas no pueden modificarse
-- `objective` — Los hallazgos objetivos no pueden modificarse
-- `assessment` — La evaluación clínica no puede modificarse
-- `plan` — El plan de tratamiento no puede modificarse
+- `semiologicalEvaluation` — La evaluación semiológica no puede modificarse
+- `extraConsultationData` — Los datos extras de la consulta no pueden modificarse
+- `diagnoses` — Los diagnósticos no pueden modificarse
+- `diagnosesUnderStudy` — Los diagnósticos en estudio no pueden modificarse
+- `pharmacologicalPlan` — El plan farmacológico no puede modificarse
+- `indications` — Las indicaciones no pueden modificarse
+- `extras` — Los extras no pueden modificarse
 - `finalizedAt` — La fecha de finalización no puede cambiar
 
 #### 2.4.3 Mecanismo de Corrección: Addenda
@@ -229,7 +235,7 @@ El Evento NOTE existe para:
 
 ### 3.4 Lo que NO es un Evento NOTE
 
-- **NO es el documento clínico** — No contiene la documentación clínica (subjetivo, objetivo, evaluación, plan)
+- **NO es el documento clínico** — No contiene la documentación clínica (evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones, extras)
 - **NO es editable** — Una vez creado, no puede modificarse
 - **NO aparece en estado Draft** — Solo existe cuando una Nota es finalizada
 - **NO puede eliminarse** — Es permanente en la Timeline
@@ -354,10 +360,13 @@ Los Addenda (anexos) de una Nota **NO generan nuevos Eventos NOTE**.
 2. **Clínico completa campos**
    - `encounterDate` — Fecha del Encuentro clínico
    - `encounterType` — Tipo de Encuentro clínico
-   - `subjective` — Observaciones subjetivas (opcional)
-   - `objective` — Hallazgos objetivos (opcional)
-   - `assessment` — Evaluación clínica (opcional)
-   - `plan` — Plan de tratamiento (opcional)
+   - `semiologicalEvaluation` — Evaluación semiológica (opcional)
+   - `extraConsultationData` — Datos extras de la consulta (opcional)
+   - `diagnoses` — Diagnósticos (opcional)
+   - `diagnosesUnderStudy` — Diagnósticos en estudio (opcional)
+   - `pharmacologicalPlan` — Plan Farmacológico, alineado con la entidad Medication (opcional)
+   - `indications` — Indicaciones (opcional)
+   - `extras` — Extras (opcional)
 
 3. **Nota permanece en estado Draft**
    - Puede ser editada libremente
@@ -371,7 +380,7 @@ Los Addenda (anexos) de una Nota **NO generan nuevos Eventos NOTE**.
 - `encounterDate` es requerido
 - `encounterType` es requerido
 - `encounterDate` no puede ser una fecha futura
-- Al menos una sección de contenido debe tener información (subjetivo, objetivo, evaluación o plan)
+- Al menos una sección de contenido debe tener información (evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones o extras)
 
 ### 5.2 Editar Nota
 
@@ -441,7 +450,7 @@ Una Nota finalizada **NO puede ser editada**.
 
 - La Nota debe estar en estado `Draft`
 - `encounterDate` no puede ser una fecha futura
-- Debe existir contenido clínico (al menos una sección con información)
+- Debe existir contenido clínico (al menos una sección con información: evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones o extras)
 
 ---
 
@@ -588,7 +597,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 2. Usuario selecciona el Evento NOTE
 3. Sistema muestra detalles del evento (fecha, título, descripción)
 4. Sistema proporciona acceso a la Nota Clínica asociada
-5. Usuario accede a la Nota para ver contenido completo (subjetivo, objetivo, evaluación, plan, addenda)
+5. Usuario accede a la Nota para ver contenido completo (evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones, extras, addenda)
 
 **Principio de presentación:**
 
@@ -734,7 +743,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 
 **Requisitos de documentación:**
 
-- La estructura de la Nota (subjetivo, objetivo, evaluación, plan) cumple con estándares de documentación médica
+- La estructura de la Nota (evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones, extras) cumple con estándares de documentación médica
 - La inmutabilidad cumple con requisitos de integridad de registros médicos
 - La trazabilidad cumple con requisitos de auditoría
 
@@ -881,7 +890,7 @@ El Evento NOTE se ordena en la Timeline según las reglas del Timeline Engine.
 **Acceder a Documentación:**
 1. Ver Evento NOTE en Timeline
 2. Acceder a Nota Clínica asociada
-3. Ver contenido completo (subjetivo, objetivo, evaluación, plan, addenda)
+3. Ver contenido completo (evaluación semiológica, datos extras de la consulta, diagnósticos, diagnósticos en estudio, plan farmacológico, indicaciones, extras, addenda)
 
 **Corregir Nota Finalizada:**
 1. Acceder a Nota finalizada

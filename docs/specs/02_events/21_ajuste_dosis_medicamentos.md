@@ -21,6 +21,7 @@ Los siguientes parámetros pueden ser modificados mediante un ajuste de dosis:
 - **Dosis** (`dosage`): Cantidad numérica del medicamento
 - **Unidad de dosis** (`dosageUnit`): Unidad de medida (mg, ml, tabletas, etc.)
 - **Frecuencia** (`frequency`): Intervalo de administración (diario, dos veces al día, etc.)
+- **Período de renovación de receta** (`prescriptionRenewalPeriod`): Intervalo en días de validez de la receta (opcional)
 
 **Nota:** El nombre del medicamento (`drugName`) NO puede ser modificado mediante un ajuste. Un cambio de medicamento constituye una discontinuación y un nuevo inicio.
 
@@ -89,6 +90,7 @@ Para reconstruir el historial completo de un medicamento:
 |-------|------|-------------|-------------------|
 | `newDosageUnit` | String | Nueva unidad de dosis | Se mantiene la unidad del medicamento original |
 | `newFrequency` | String | Nueva frecuencia | Se mantiene la frecuencia del medicamento original |
+| `newPrescriptionRenewalPeriod` | Integer (nullable) | Nuevo período de renovación en días | Se mantiene el período del medicamento original |
 
 ### 4.3 Datos Derivados Automáticamente
 
@@ -96,6 +98,7 @@ Los siguientes datos se derivan automáticamente del medicamento original:
 
 - `drugName`: Se mantiene idéntico al medicamento original
 - `comments`: Se mantiene idéntico al medicamento original (puede ser null)
+- `prescriptionRenewalPeriod`: Se mantiene idéntico al medicamento original (puede ser null), a menos que se especifique `newPrescriptionRenewalPeriod`
 - `clinicalRecordId`: Se mantiene idéntico al medicamento original
 - `predecessorId`: Se establece como el ID del medicamento original
 
@@ -116,6 +119,7 @@ Antes del ajuste, el medicamento original tiene:
   dosageUnit: "mg",
   frequency: "Una vez al día",
   prescriptionIssueDate: "2024-01-15",
+  prescriptionRenewalPeriod: 30,  // Puede ser null
   predecessorId: null,  // Es la versión inicial
   discontinuationReason: null
 }
@@ -147,6 +151,7 @@ Después del ajuste, el medicamento original queda:
   dosageUnit: "mg",  // Inmutable
   frequency: "Una vez al día",  // Inmutable
   prescriptionIssueDate: "2024-01-15",  // Inmutable
+  prescriptionRenewalPeriod: 30,  // Inmutable (puede ser null)
   predecessorId: null,  // Inmutable
   discontinuationReason: "Dosage changed"
 }
@@ -165,6 +170,7 @@ La nueva versión creada tiene:
   dosageUnit: "mg",  // Mantenido o ajustado
   frequency: "Una vez al día",  // Mantenido o ajustado
   prescriptionIssueDate: "2024-02-15",  // effectiveDate
+  prescriptionRenewalPeriod: 30,  // Mantenido o ajustado (puede ser null)
   predecessorId: "med-001",  // Vinculado al original
   discontinuationReason: null
 }
@@ -285,6 +291,7 @@ Ningún registro de medicamento puede ser modificado después de su creación, e
 - `dosageUnit` (del registro original)
 - `frequency` (del registro original)
 - `prescriptionIssueDate`
+- `prescriptionRenewalPeriod` (del registro original)
 - `comments`
 - `predecessorId`
 - `createdAt`

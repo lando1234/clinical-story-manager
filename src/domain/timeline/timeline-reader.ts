@@ -185,9 +185,12 @@ export async function getFullTimeline(
   // Ensure Encounter events exist for past appointments
   await ensureEncounterEventsForPatient(patientId);
 
-  // Get current date for filtering future events
-  const today = new Date();
-  today.setHours(23, 59, 59, 999); // End of today
+  // Get start of tomorrow for filtering future events
+  // Use start of tomorrow (00:00:00) and compare with lt (strictly less than)
+  // This ensures events on or after tomorrow are filtered out
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
   // Fetch all events with basic DB ordering (will refine with stable sort)
   // Filter: Exclude Encounter, MedicationChange, and MedicationPrescriptionIssued events with future dates
@@ -208,20 +211,20 @@ export async function getFullTimeline(
             ],
           },
         },
-        // Include Encounter events only if date has passed
+        // Include Encounter events only if date has passed (before tomorrow)
         {
           eventType: ClinicalEventType.Encounter,
-          eventDate: { lte: today },
+          eventDate: { lt: tomorrow },
         },
-        // Include MedicationChange events only if date has passed
+        // Include MedicationChange events only if date has passed (before tomorrow)
         {
           eventType: ClinicalEventType.MedicationChange,
-          eventDate: { lte: today },
+          eventDate: { lt: tomorrow },
         },
-        // Include MedicationPrescriptionIssued events only if date has passed
+        // Include MedicationPrescriptionIssued events only if date has passed (before tomorrow)
         {
           eventType: ClinicalEventType.MedicationPrescriptionIssued,
-          eventDate: { lte: today },
+          eventDate: { lt: tomorrow },
         },
       ],
     },
@@ -313,9 +316,12 @@ export async function getFilteredTimeline(
   // Ensure Encounter events exist for past appointments
   await ensureEncounterEventsForPatient(patientId);
 
-  // Get current date for filtering future events
-  const today = new Date();
-  today.setHours(23, 59, 59, 999); // End of today
+  // Get start of tomorrow for filtering future events
+  // Use start of tomorrow (00:00:00) and compare with lt (strictly less than)
+  // This ensures events on or after tomorrow are filtered out
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
   // Build base where clause
   // Per INC-14 resolution, MedicationChange and MedicationPrescriptionIssued events may have future dates
@@ -331,20 +337,20 @@ export async function getFilteredTimeline(
         ],
       },
     },
-    // Include Encounter events only if date has passed
+    // Include Encounter events only if date has passed (before tomorrow)
     {
       eventType: ClinicalEventType.Encounter,
-      eventDate: { lte: today },
+      eventDate: { lt: tomorrow },
     },
-    // Include MedicationChange events only if date has passed
+    // Include MedicationChange events only if date has passed (before tomorrow)
     {
       eventType: ClinicalEventType.MedicationChange,
-      eventDate: { lte: today },
+      eventDate: { lt: tomorrow },
     },
-    // Include MedicationPrescriptionIssued events only if date has passed
+    // Include MedicationPrescriptionIssued events only if date has passed (before tomorrow)
     {
       eventType: ClinicalEventType.MedicationPrescriptionIssued,
-      eventDate: { lte: today },
+      eventDate: { lt: tomorrow },
     },
   ];
 
@@ -375,13 +381,13 @@ export async function getFilteredTimeline(
     if (hasFutureFilteredTypes.includes(ClinicalEventType.Encounter)) {
       baseConditions.push({
         eventType: ClinicalEventType.Encounter,
-        eventDate: { lte: today },
+        eventDate: { lt: tomorrow },
       });
     }
     if (hasFutureFilteredTypes.includes(ClinicalEventType.MedicationChange)) {
       baseConditions.push({
         eventType: ClinicalEventType.MedicationChange,
-        eventDate: { lte: today },
+        eventDate: { lt: tomorrow },
       });
     }
     if (
@@ -391,7 +397,7 @@ export async function getFilteredTimeline(
     ) {
       baseConditions.push({
         eventType: ClinicalEventType.MedicationPrescriptionIssued,
-        eventDate: { lte: today },
+        eventDate: { lt: tomorrow },
       });
     }
   }
@@ -407,12 +413,17 @@ export async function getFilteredTimeline(
   if (dateRangeStart || dateRangeEnd) {
     // For future-filtered event types, we need to ensure they're not in the future
     // and also respect the date range filter
-    const futureFilteredDateFilter: Prisma.DateTimeFilter = { lte: today };
+    const futureFilteredDateFilter: Prisma.DateTimeFilter = {};
+    // Always filter out future events (before tomorrow)
+    if (dateRangeEnd && dateRangeEnd < tomorrow) {
+      // If dateRangeEnd is in the past, use it as the upper bound
+      futureFilteredDateFilter.lte = dateRangeEnd;
+    } else {
+      // Otherwise, use tomorrow as the upper bound to filter future events
+      futureFilteredDateFilter.lt = tomorrow;
+    }
     if (dateRangeStart) {
       futureFilteredDateFilter.gte = dateRangeStart;
-    }
-    if (dateRangeEnd) {
-      futureFilteredDateFilter.lte = dateRangeEnd < today ? dateRangeEnd : today;
     }
 
     // For other events, apply date range normally

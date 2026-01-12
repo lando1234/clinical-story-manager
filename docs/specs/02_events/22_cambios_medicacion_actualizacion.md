@@ -28,6 +28,12 @@ Este documento especifica los cambios funcionales solicitados por el cliente par
    - El concepto clínico cambia de "razón obligatoria" a "comentarios opcionales"
    - El campo deja de ser obligatorio y pasa a ser opcional
 
+5. **Incorporación de período de renovación de recetas**
+   - Se agrega el campo `prescription_renewal_period` al modelo de datos Medication
+   - Campo numérico opcional que indica el intervalo en días de validez/renovación de la receta
+   - Mejora la gestión administrativa de las recetas permitiendo el seguimiento de períodos de validez
+   - Sigue las reglas de inmutabilidad: si cambia, genera una nueva versión del registro
+
 ### 1.2 Justificación Clínica
 
 **Eliminación de vía de administración:**
@@ -50,6 +56,11 @@ Este documento especifica los cambios funcionales solicitados por el cliente par
 - Permite documentar información adicional sin requerir una justificación formal
 - Reduce fricción en el flujo de entrada de datos
 - Alinea con prácticas clínicas donde los comentarios son opcionales
+
+**Incorporación de período de renovación:**
+- Facilita la gestión administrativa y el seguimiento de validez de recetas
+- Permite documentar intervalos estándar de renovación (ej: 30 días, 90 días)
+- Mejora la trazabilidad administrativa sin afectar la lógica clínica del tratamiento
 
 ---
 

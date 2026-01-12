@@ -411,8 +411,13 @@ export async function issuePrescription(
   // Note: Future dates are allowed for MedicationPrescriptionIssued events per INC-14 resolution.
   // Events with future dates are created but filtered from timeline until date passes.
   // Only validate that new prescription date is after original prescription issue date.
-  // Validate that new prescription date is after original prescription issue date
-  if (input.prescriptionIssueDate <= medication.prescriptionIssueDate) {
+  // Normalize dates to compare only date part (ignore time component and timezone offsets)
+  const originalDateString = new Date(medication.prescriptionIssueDate)
+    .toISOString()
+    .slice(0, 10);
+  const newDateString = new Date(input.prescriptionIssueDate).toISOString().slice(0, 10);
+
+  if (newDateString <= originalDateString) {
     return err(
       new DomainError(
         "INVALID_PRESCRIPTION_DATE_MUST_BE_AFTER_FIRST",

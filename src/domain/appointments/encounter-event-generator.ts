@@ -85,8 +85,24 @@ export async function ensureEncounterEventForAppointment(
     },
   });
 
+  // If event exists, check if its date matches the appointment date
+  // If not, delete it so we can create a new one with the correct date
   if (existingEvent) {
-    return { created: false, eventId: existingEvent.id };
+    // Normalize dates to compare only date part (ignore time component)
+    const eventDate = new Date(existingEvent.eventDate);
+    eventDate.setUTCHours(0, 0, 0, 0);
+    const appointmentDate = new Date(appointment.scheduledDate);
+    appointmentDate.setUTCHours(0, 0, 0, 0);
+    
+    // If dates match, return existing event
+    if (eventDate.getTime() === appointmentDate.getTime()) {
+      return { created: false, eventId: existingEvent.id };
+    }
+    
+    // Dates don't match - delete the old event so we can create a new one
+    await prisma.clinicalEvent.delete({
+      where: { id: existingEvent.id },
+    });
   }
 
   // Get clinical record for patient
@@ -96,6 +112,10 @@ export async function ensureEncounterEventForAppointment(
   }
 
   // Generate event (regardless of whether date is in future or past)
+  // Normalize the event date to midnight to ensure consistent date-only comparison
+  const eventDate = new Date(appointment.scheduledDate);
+  eventDate.setUTCHours(0, 0, 0, 0);
+  
   const title = getAppointmentTypeTitle(appointment.appointmentType);
   const description = getEncounterDescription(
     appointment.appointmentType,
@@ -106,7 +126,7 @@ export async function ensureEncounterEventForAppointment(
   const result = await emitEncounterEvent({
     clinicalRecordId,
     appointmentId: appointment.id,
-    eventDate: appointment.scheduledDate,
+    eventDate: eventDate,
     title,
     description,
   });
@@ -205,9 +225,9 @@ export async function deleteEncounterEventForFutureAppointment(
 
   // Check if appointment date is in the future
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
   const appointmentDate = new Date(appointment.scheduledDate);
-  appointmentDate.setHours(0, 0, 0, 0);
+  appointmentDate.setUTCHours(0, 0, 0, 0);
 
   // Only delete if appointment date is in the future
   // Past appointments' events are immutable

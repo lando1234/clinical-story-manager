@@ -32,6 +32,7 @@ Represents an individual receiving psychiatric care. Central entity around which
 | emergency_contact_name | Text (nullable) | Emergency contact full name |
 | emergency_contact_phone | Text (nullable) | Emergency contact phone |
 | emergency_contact_relationship | Text (nullable) | Relationship to patient |
+| appointment_frequency | Text (nullable) | Frequency of clinical appointments (e.g., weekly, biweekly, monthly) |
 | status | Enumeration | Active or Inactive |
 | registration_date | Timestamp | When patient was registered |
 | created_at | Timestamp | Record creation timestamp |
@@ -213,6 +214,7 @@ Pharmaceutical agent record tracking the complete lifecycle from initiation thro
 | dosage_unit | Text | Unit of measurement (mg, mcg, etc.) |
 | frequency | Text | Dosing schedule |
 | prescription_issue_date | Date | When prescription was issued |
+| prescription_renewal_period | Integer (nullable) | Interval in days for prescription validity/renewal |
 | end_date | Date (nullable) | When medication was discontinued |
 | comments | Text (nullable) | Optional comments about the prescription |
 | discontinuation_reason | Text (nullable) | Why medication was stopped |
@@ -307,13 +309,15 @@ Placeholder for scheduled future encounters. Minimal implementation supporting n
 | updated_at | Timestamp | Last modification timestamp |
 
 **Appointment Type Values:**
-- Initial Evaluation
-- Follow-up
-- Crisis Intervention
-- Medication Review
-- Therapy Session
-- Phone Consultation
-- Other
+- Psicoterapia
+- Orientación Familiar
+- Llamado programado
+- Llamado en crisis
+- Sesión Grupal
+- Taller
+- Entrevista de Admisión
+- Evaluación
+- Llamado con el colegio
 
 **Status Values:**
 - Scheduled
@@ -568,7 +572,7 @@ Timeline ordering must be deterministic. Given the same data, the same order mus
 - id, note_id, content, reason
 
 **Medication:**
-- id, clinical_record_id, drug_name, dosage, dosage_unit, frequency, prescription_issue_date, comments, status
+- id, clinical_record_id, drug_name, dosage, dosage_unit, frequency, prescription_issue_date, prescription_renewal_period, comments, status
 - For discontinuation: end_date, discontinuation_reason (additional requirements)
 
 **ClinicalEvent:**

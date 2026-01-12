@@ -88,6 +88,7 @@ Administrative information supports clinical operations but is not part of the c
 | **Emergency contact name** | Full name of emergency contact person | Optional |
 | **Emergency contact phone** | Phone number of emergency contact | Required if emergency contact name is provided |
 | **Emergency contact relationship** | Relationship of emergency contact to patient | Optional |
+| **Appointment frequency** | Frequency of clinical appointments | Optional |
 
 **Rationale:** Contact information may change frequently and does not affect clinical documentation. Emergency contact information is required only when an emergency contact is specified.
 
@@ -145,6 +146,7 @@ The following fields may be provided but are not required:
 - Emergency contact name
 - Emergency contact phone (required if emergency contact name is provided)
 - Emergency contact relationship
+- Appointment frequency
 
 ### 3.4 Validation Rules
 
@@ -227,6 +229,7 @@ When a patient is retrieved, the following information is returned:
 | Emergency contact name | Yes | Administrative information |
 | Emergency contact phone | Yes | Administrative information |
 | Emergency contact relationship | Yes | Administrative information |
+| Appointment frequency | Yes | Administrative information |
 | Status | Yes | System state information |
 | Registration date | Yes | Audit information |
 | Created at | Yes | Audit information |
@@ -341,6 +344,7 @@ The following fields can be updated:
 | Emergency contact name | Yes | Emergency contact updates |
 | Emergency contact phone | Yes | Emergency contact phone updates |
 | Emergency contact relationship | Yes | Relationship updates |
+| Appointment frequency | Yes | Frequency updates |
 | Status | Yes | Activate or deactivate patient |
 
 ### 6.3 What Is Immutable

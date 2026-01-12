@@ -138,3 +138,4 @@ Verifica que:
 - El archivo `.env.test` está en `.gitignore` y no se subirá al repositorio
 - Para bases de datos locales, no se requiere SSL (se detecta automáticamente)
 
+

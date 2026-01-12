@@ -53,6 +53,20 @@ export async function createDraftNote(
     );
   }
 
+  // Draft notes must have at least one piece of clinical content
+  const hasClinicalContent = [input.subjective, input.objective, input.assessment, input.plan].some(
+    (field) => typeof field === "string" && field.trim().length > 0
+  );
+
+  if (!hasClinicalContent) {
+    return err(
+      new DomainError(
+        "MISSING_REQUIRED_FIELDS",
+        "Draft note requires subjective, objective, assessment, or plan content"
+      )
+    );
+  }
+
   const note = await prisma.note.create({
     data: {
       clinicalRecordId: input.clinicalRecordId,

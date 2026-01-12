@@ -88,6 +88,19 @@ Este documento define la terminología estándar utilizada en todas las especifi
 - Tiene una fecha programada (`scheduledDate`)
 - Puede tener estado: Scheduled, Completed, Cancelled, NoShow
 - NO contiene documentación clínica
+- Debe tener un tipo de cita (appointment type)
+
+**Tipos de Turno Agendado:**
+Los tipos válidos de Appointment son:
+- Psicoterapia
+- Orientación Familiar
+- Llamado programado
+- Llamado en crisis
+- Sesión Grupal
+- Taller
+- Entrevista de Admisión
+- Evaluación
+- Llamado con el colegio
 
 **Uso en especificaciones:**
 - Usar "Appointment" cuando se refiere a la entidad técnica

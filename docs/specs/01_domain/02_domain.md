@@ -31,6 +31,7 @@ Each Patient has exactly one clinical record that persists for the duration of t
 - Emergency contact name
 - Emergency contact phone
 - Emergency contact relationship
+- Appointment frequency
 - Status (active or inactive)
 - Registration date
 
@@ -211,6 +212,7 @@ All medications, current and historical, remain visible in the patient's record.
 - Dosage unit
 - Frequency
 - Prescription issue date
+- Prescription renewal period (optional)
 - End date
 - Comments (optional)
 - Discontinuation reason
@@ -233,6 +235,7 @@ All medications, current and historical, remain visible in the patient's record.
 
 **Optional Fields:**
 - Comments (comments): Optional field for additional notes about the prescription
+- Prescription renewal period (prescription_renewal_period): Optional field indicating the interval in days for prescription validity/renewal
 - End date (end_date): Optional, required only when discontinuing medication
 - Discontinuation reason (discontinuation_reason): Optional, required only when discontinuing medication
 - Predecessor ID (predecessor_id): Optional, used for linking dosage changes
@@ -241,7 +244,7 @@ All medications, current and historical, remain visible in the patient's record.
 - A Medication without an end date is considered active.
 - Setting an end date changes the status to discontinued.
 - Discontinuing a Medication requires a discontinuation reason.
-- Dosage changes create a new Medication entry rather than modifying the existing one.
+- Dosage changes or prescription renewal period changes create a new Medication entry rather than modifying the existing one.
 - The original Medication is discontinued and linked to the new entry.
 - Medications cannot be deleted from the record.
 - Medication entries are finalized immediately upon creation; there is no draft state.
@@ -321,6 +324,8 @@ In the current scope, Appointment exists only to record the intended date of fut
 
 ### Business Rules
 
+- An Appointment must have an appointment type.
+- Appointment types are: Psicoterapia, Orientación Familiar, Llamado programado, Llamado en crisis, Sesión Grupal, Taller, Entrevista de Admisión, Evaluación, Llamado con el colegio.
 - Appointment scheduling and calendar management are outside MVP scope.
 - This entity exists to support minimal encounter date tracking.
 - An Appointment does not generate ClinicalEvents.

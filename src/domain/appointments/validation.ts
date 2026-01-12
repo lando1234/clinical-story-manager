@@ -48,24 +48,10 @@ function getStartOfToday(): Date {
  * @returns ValidationError if invalid, null if valid
  */
 export function validateScheduledDate(scheduledDate: Date): ValidationResult {
-  const today = getStartOfToday();
-
   if (!(scheduledDate instanceof Date) || isNaN(scheduledDate.getTime())) {
     return {
       code: AppointmentErrorCode.INVALID_SCHEDULED_DATE,
       message: "Scheduled date must be a valid date",
-      field: "scheduledDate",
-    };
-  }
-
-  // Compare dates only (ignore time)
-  const scheduledDateOnly = new Date(scheduledDate);
-  scheduledDateOnly.setHours(0, 0, 0, 0);
-
-  if (scheduledDateOnly < today) {
-    return {
-      code: AppointmentErrorCode.INVALID_SCHEDULED_DATE,
-      message: "Scheduled date must be today or in the future",
       field: "scheduledDate",
     };
   }
