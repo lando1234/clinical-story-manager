@@ -17,6 +17,7 @@ interface RouteParams {
  * - dosageUnit: string (required)
  * - frequency: string (required)
  * - prescriptionIssueDate: ISO date string (required)
+ * - prescriptionRenewalPeriod?: number (optional, days until renewal)
  * - comments?: string (optional)
  */
 export async function POST(
@@ -26,6 +27,19 @@ export async function POST(
   try {
     const { id: patientId } = await params;
     const body = await request.json();
+
+    let renewalPeriod: number | null | undefined;
+    if (body.prescriptionRenewalPeriod === null) {
+      renewalPeriod = null;
+    } else if (body.prescriptionRenewalPeriod !== undefined) {
+      renewalPeriod = Number(body.prescriptionRenewalPeriod);
+    }
+    if (renewalPeriod !== undefined && renewalPeriod !== null && (Number.isNaN(renewalPeriod) || !Number.isFinite(renewalPeriod))) {
+      return NextResponse.json(
+        { error: 'Invalid prescriptionRenewalPeriod' },
+        { status: 400 }
+      );
+    }
 
     // Resolve clinical record ID
     const clinicalRecordId = await getClinicalRecordForPatient(patientId);
@@ -52,6 +66,7 @@ export async function POST(
       dosageUnit: body.dosageUnit,
       frequency: body.frequency,
       prescriptionIssueDate,
+      prescriptionRenewalPeriod: renewalPeriod,
       comments: body.comments,
     });
 

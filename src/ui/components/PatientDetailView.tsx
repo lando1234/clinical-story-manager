@@ -251,6 +251,18 @@ export function PatientDetailView({ patientId }: PatientDetailViewProps) {
                 )}
               </dd>
             </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Frecuencia de atención
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {patient.appointmentFrequency || (
+                  <span className="text-gray-400 dark:text-gray-500">
+                    No proporcionado
+                  </span>
+                )}
+              </dd>
+            </div>
             <div className="sm:col-span-2">
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Dirección

@@ -651,19 +651,102 @@ For each completed task, agent must be able to state:
 - Which confirmations were obtained
 - Which edge cases were encountered
 
+### 7.4 Mandatory Implementation Workflow
+
+**Every agent MUST complete the following steps when implementing new functionality:**
+
+#### 7.4.1 Update Use Cases (if necessary)
+
+- **When:** If the implemented functionality introduces new use cases or modifies existing ones
+- **Action:** Update `docs/specs/99_appendix/04_use_cases.md` with:
+  - New use case descriptions (UC-XX format)
+  - Modified use case steps or validations
+  - New edge cases or scenarios
+- **Verification:** Ensure use cases accurately reflect the implemented behavior
+
+#### 7.4.2 Implement Unit Tests
+
+- **When:** Always, for every new functionality added
+- **Action:** Create or update unit test files in `src/tests/`:
+  - Test individual functions, methods, and services
+  - Test validation rules and business logic
+  - Test error handling and edge cases
+  - Use appropriate test file organization (e.g., `patient-crud.test.ts`, `invariants/`, etc.)
+- **Coverage:** Aim for comprehensive coverage of the new functionality
+- **Framework:** Use Vitest as defined in the testing stack
+
+#### 7.4.3 Update Use Case Specifications
+
+- **When:** Always, when adding new functionality that relates to use cases
+- **Action:** Add or update specifications in `docs/specs/99_appendix/04_use_cases.md`:
+  - Document new use case flows
+  - Update existing use cases if behavior changes
+  - Add test scenarios and validation rules
+  - Ensure consistency with implementation
+
+#### 7.4.4 Implement Functional Tests
+
+- **When:** Always, for functionality that implements use cases
+- **Action:** Create or update functional tests in `src/tests/functional/use-cases.test.ts`:
+  - Test complete use case flows end-to-end
+  - Test user interactions and system responses
+  - Test integration between components
+  - Follow the existing test naming convention (e.g., `UC-XX-TYY`)
+- **Verification:** Ensure functional tests validate the use cases as documented
+
+#### 7.4.5 Commit with Clear Message and Run Pre-commit
+
+- **When:** After completing all implementation and testing steps
+- **Action:**
+  1. Stage all changes using git
+  2. Create a commit with a clear, descriptive message that explains:
+     - What functionality was added or modified
+     - Which use cases were affected
+     - What tests were added or updated
+  3. Execute the commit via console/terminal to trigger pre-commit hooks
+  4. If pre-commit hooks fail:
+     - Fix any linting errors
+     - Fix any formatting issues
+     - Fix any test failures
+     - Fix any type errors
+     - Re-run the commit process until pre-commit passes
+- **Commit Message Format:**
+  ```
+  feat: [Brief description of functionality]
+  
+  - Implements [use case or feature]
+  - Adds unit tests for [component/service]
+  - Adds functional tests for [use case]
+  - Updates use case specs in [section]
+  ```
+- **Pre-commit Requirements:**
+  - All tests must pass
+  - All linting checks must pass
+  - All type checks must pass
+  - Code formatting must be correct
+
+**Failure to complete any of these steps constitutes a policy violation.**
+
 ---
 
 ## 8. Policy Violations
 
 ### 8.1 What Constitutes a Violation
 
-- Modifying specification documents
+- Modifying specification documents (except use cases when implementing functionality)
 - Adding features not in specifications
 - Using excluded technologies
 - Making decisions reserved for humans
 - Proceeding past a STOP condition
 - Resolving conflicts autonomously
 - Ignoring edge cases
+- **Failing to complete mandatory implementation workflow steps** (see §7.4):
+  - Not updating use cases when necessary
+  - Not implementing unit tests for new functionality
+  - Not updating use case specifications
+  - Not implementing functional tests
+  - Not committing with clear message and running pre-commit hooks
+  - Not fixing pre-commit failures
 
 ### 8.2 Consequences of Violation
 
@@ -683,7 +766,7 @@ If an agent detects a previous violation (by itself or another agent):
 
 ---
 
-*Document Version: 1.3*
+*Document Version: 1.4*
 *Status: Final*
 *Scope: All implementation agents*
 *Effective: Immediately upon creation*
@@ -691,3 +774,4 @@ If an agent detects a previous violation (by itself or another agent):
 - *v1.1: PostgreSQL/Neon decision lock-in added*
 - *v1.2: Prisma ORM decision lock-in added*
 - *v1.3: UX language requirements added (Spanish-only UI)*
+- *v1.4: Mandatory implementation workflow added (use cases updates, unit tests, functional tests, commit process)*

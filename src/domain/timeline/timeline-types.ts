@@ -76,6 +76,7 @@ export interface ActiveMedication {
   dosageUnit: string;
   frequency: string;
   prescriptionIssueDate: Date;
+  prescriptionRenewalPeriod: number | null;
   comments: string | null;
 }
 
@@ -142,6 +143,7 @@ export interface HistoricalActiveMedication {
   dosageUnit: string;
   frequency: string;
   prescriptionIssueDate: Date;
+  prescriptionRenewalPeriod: number | null;
 }
 
 /**
@@ -256,6 +258,7 @@ export interface MedicationSourceData {
   dosageUnit: string;
   frequency: string;
   prescriptionIssueDate: Date;
+  prescriptionRenewalPeriod: number | null;
   endDate: Date | null;
   comments: string | null;
   discontinuationReason: string | null;

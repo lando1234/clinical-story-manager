@@ -71,6 +71,9 @@ export async function PATCH(
     if (body.dateOfBirth !== undefined) {
       input.dateOfBirth = new Date(body.dateOfBirth);
     }
+    if (body.appointmentFrequency !== undefined) {
+      input.appointmentFrequency = body.appointmentFrequency;
+    }
     if (body.contactPhone !== undefined) {
       input.contactPhone = body.contactPhone;
     }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 interface FormData {
   fullName: string;
   dateOfBirth: string;
+  appointmentFrequency: string;
   contactPhone: string;
   contactEmail: string;
   address: string;
@@ -37,6 +38,7 @@ export function CreatePatientForm() {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     dateOfBirth: '',
+    appointmentFrequency: '',
     contactPhone: '',
     contactEmail: '',
     address: '',
@@ -141,11 +143,24 @@ export function CreatePatientForm() {
 
     try {
       // Prepare request body - only send non-empty optional fields
-      const requestBody: any = {
+      const requestBody: {
+        fullName: string;
+        dateOfBirth: string;
+        appointmentFrequency?: string;
+        contactPhone?: string;
+        contactEmail?: string;
+        address?: string;
+        emergencyContactName?: string;
+        emergencyContactPhone?: string;
+        emergencyContactRelationship?: string;
+      } = {
         fullName: formData.fullName.trim(),
         dateOfBirth: formData.dateOfBirth,
       };
 
+      if (formData.appointmentFrequency.trim()) {
+        requestBody.appointmentFrequency = formData.appointmentFrequency.trim();
+      }
       if (formData.contactPhone.trim()) {
         requestBody.contactPhone = formData.contactPhone.trim();
       }
@@ -185,7 +200,7 @@ export function CreatePatientForm() {
       const createdPatient = await response.json();
       router.push(`/patients/${createdPatient.id}`);
       router.refresh();
-    } catch (error) {
+    } catch (_error) {
       setSubmitError('Error de conexión. Por favor, intente nuevamente.');
       setIsSubmitting(false);
     }
@@ -277,6 +292,30 @@ export function CreatePatientForm() {
         <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
           Información de Contacto (Opcional)
         </h2>
+
+        {/* Appointment Frequency */}
+        <div className="mb-4">
+          <label
+            htmlFor="appointmentFrequency"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Frecuencia de atención
+          </label>
+          <select
+            id="appointmentFrequency"
+            value={formData.appointmentFrequency}
+            onChange={(e) => handleChange('appointmentFrequency', e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            disabled={isSubmitting}
+          >
+            <option value="">Selecciona una frecuencia (opcional)</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Quincenal">Quincenal</option>
+            <option value="Mensual">Mensual</option>
+            <option value="Ocasional">Ocasional</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
 
         {/* Contact Phone */}
         <div className="mb-4">

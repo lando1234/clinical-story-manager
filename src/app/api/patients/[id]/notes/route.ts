@@ -14,6 +14,7 @@ interface RouteParams {
  * Request body:
  * - encounterDate: ISO date string
  * - encounterType: EncounterType enum value
+ * - content?: string (serialized structured note)
  * - subjective?: string
  * - objective?: string
  * - assessment?: string
@@ -49,6 +50,7 @@ export async function POST(
       clinicalRecordId,
       encounterDate,
       encounterType: body.encounterType as EncounterType,
+      content: typeof body.content === "string" ? body.content : undefined,
       subjective: body.subjective,
       objective: body.objective,
       assessment: body.assessment,

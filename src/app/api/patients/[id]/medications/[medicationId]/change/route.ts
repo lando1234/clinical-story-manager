@@ -15,6 +15,7 @@ interface RouteParams {
  * - newDosageUnit?: string
  * - newFrequency?: string
  * - effectiveDate: ISO date string (required)
+ * - newPrescriptionRenewalPeriod?: number (optional, days until renewal)
  * - changeReason?: string (optional)
  */
 export async function POST(
@@ -24,6 +25,19 @@ export async function POST(
   try {
     const { medicationId } = await params;
     const body = await request.json();
+
+    let newPrescriptionRenewalPeriod: number | null | undefined;
+    if (body.newPrescriptionRenewalPeriod === null) {
+      newPrescriptionRenewalPeriod = null;
+    } else if (body.newPrescriptionRenewalPeriod !== undefined) {
+      newPrescriptionRenewalPeriod = Number(body.newPrescriptionRenewalPeriod);
+    }
+    if (newPrescriptionRenewalPeriod !== undefined && newPrescriptionRenewalPeriod !== null && (Number.isNaN(newPrescriptionRenewalPeriod) || !Number.isFinite(newPrescriptionRenewalPeriod))) {
+      return NextResponse.json(
+        { error: 'Invalid newPrescriptionRenewalPeriod' },
+        { status: 400 }
+      );
+    }
 
     // Parse effective date
     const effectiveDate = body.effectiveDate ? new Date(body.effectiveDate) : undefined;
@@ -39,6 +53,7 @@ export async function POST(
       newDosage: body.newDosage,
       newDosageUnit: body.newDosageUnit,
       newFrequency: body.newFrequency,
+      newPrescriptionRenewalPeriod,
       effectiveDate,
       changeReason: body.changeReason,
     });

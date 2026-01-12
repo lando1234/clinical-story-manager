@@ -823,7 +823,7 @@ describe("Functional Use Case Tests", () => {
       const result = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysFromNow(5),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
         notes: "Control",
       });
 
@@ -849,7 +849,7 @@ describe("Functional Use Case Tests", () => {
       const result = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysAgo(3),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       expect(isAppointmentSuccess(result)).toBe(true);
@@ -869,7 +869,7 @@ describe("Functional Use Case Tests", () => {
       const result = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: new Date("invalid"),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       expect(result.success).toBe(false);
@@ -885,7 +885,7 @@ describe("Functional Use Case Tests", () => {
       const scheduled = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysFromNow(5),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       if (!isAppointmentSuccess(scheduled)) {
@@ -914,7 +914,7 @@ describe("Functional Use Case Tests", () => {
       const scheduled = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysFromNow(5),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       if (!isAppointmentSuccess(scheduled)) {
@@ -939,7 +939,7 @@ describe("Functional Use Case Tests", () => {
       const scheduled = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysAgo(2),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       if (!isAppointmentSuccess(scheduled)) {
@@ -965,7 +965,7 @@ describe("Functional Use Case Tests", () => {
       const scheduled = await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysFromNow(5),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       if (!isAppointmentSuccess(scheduled)) {
@@ -1067,7 +1067,7 @@ describe("Functional Use Case Tests", () => {
       await appointmentService.scheduleAppointment({
         patientId: patient.id,
         scheduledDate: daysFromNow(5),
-        appointmentType: AppointmentType.FollowUp,
+        appointmentType: AppointmentType.Psicoterapia,
       });
 
       const timelineResult = await getFullTimeline(patient.id, "descending");

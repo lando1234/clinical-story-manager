@@ -7,6 +7,7 @@ import type { PatientOutput } from '@/types/patient';
 interface FormData {
   fullName: string;
   dateOfBirth: string;
+  appointmentFrequency: string;
   contactPhone: string;
   contactEmail: string;
   address: string;
@@ -47,6 +48,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     dateOfBirth: '',
+    appointmentFrequency: '',
     contactPhone: '',
     contactEmail: '',
     address: '',
@@ -83,6 +85,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
         setFormData({
           fullName: patient.fullName,
           dateOfBirth: dobDate,
+          appointmentFrequency: patient.appointmentFrequency || '',
           contactPhone: patient.contactPhone || '',
           contactEmail: patient.contactEmail || '',
           address: patient.address || '',
@@ -198,6 +201,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
     return (
       formData.fullName.trim() !== originalPatient.fullName ||
       formData.dateOfBirth !== originalDob ||
+      (formData.appointmentFrequency || '') !== (originalPatient.appointmentFrequency || '') ||
       (formData.contactPhone || '') !== (originalPatient.contactPhone || '') ||
       (formData.contactEmail || '') !== (originalPatient.contactEmail || '') ||
       (formData.address || '') !== (originalPatient.address || '') ||
@@ -234,7 +238,18 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
 
     try {
       // Prepare request body - only send changed fields
-      const requestBody: any = {};
+      const requestBody: {
+        fullName?: string;
+        dateOfBirth?: string;
+        appointmentFrequency?: string | null;
+        contactPhone?: string | null;
+        contactEmail?: string | null;
+        address?: string | null;
+        emergencyContactName?: string | null;
+        emergencyContactPhone?: string | null;
+        emergencyContactRelationship?: string | null;
+        status?: 'Active' | 'Inactive';
+      } = {};
 
       if (originalPatient) {
         // Normalize date for comparison
@@ -249,6 +264,9 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
         }
         if (formData.dateOfBirth !== originalDob) {
           requestBody.dateOfBirth = formData.dateOfBirth;
+        }
+        if ((formData.appointmentFrequency || '') !== (originalPatient.appointmentFrequency || '')) {
+          requestBody.appointmentFrequency = formData.appointmentFrequency.trim() || null;
         }
         if ((formData.contactPhone || '') !== (originalPatient.contactPhone || '')) {
           requestBody.contactPhone = formData.contactPhone.trim() || null;
@@ -292,7 +310,7 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
       // Success: redirect to patient page
       router.push(`/patients/${patientId}`);
       router.refresh();
-    } catch (error) {
+    } catch (_error) {
       setSubmitError('Error de conexión. Por favor, intente nuevamente.');
       setIsSubmitting(false);
     }
@@ -490,6 +508,30 @@ export function UpdatePatientForm({ patientId }: UpdatePatientFormProps) {
           <h2 className="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
             Información de Contacto (Opcional)
           </h2>
+
+          {/* Appointment Frequency */}
+          <div className="mb-4">
+            <label
+              htmlFor="appointmentFrequency"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Frecuencia de atención
+            </label>
+            <select
+              id="appointmentFrequency"
+              value={formData.appointmentFrequency}
+              onChange={(e) => handleChange('appointmentFrequency', e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              disabled={isSubmitting}
+            >
+              <option value="">Selecciona una frecuencia (opcional)</option>
+              <option value="Semanal">Semanal</option>
+              <option value="Quincenal">Quincenal</option>
+              <option value="Mensual">Mensual</option>
+              <option value="Ocasional">Ocasional</option>
+              <option value="Otra">Otra</option>
+            </select>
+          </div>
 
           {/* Contact Phone */}
           <div className="mb-4">

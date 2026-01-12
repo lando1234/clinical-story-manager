@@ -13,6 +13,7 @@ interface RouteParams {
  * Request body (all fields optional):
  * - encounterDate?: ISO date string
  * - encounterType?: EncounterType enum value
+ * - content?: string (serialized structured note)
  * - subjective?: string
  * - objective?: string
  * - assessment?: string
@@ -41,6 +42,7 @@ export async function PATCH(
     const result = await updateDraftNote(noteId, {
       encounterDate,
       encounterType: body.encounterType as EncounterType | undefined,
+      content: typeof body.content === "string" ? body.content : undefined,
       subjective: body.subjective,
       objective: body.objective,
       assessment: body.assessment,

@@ -15,6 +15,7 @@ export const PatientRepository = {
       data: {
         fullName: data.fullName,
         dateOfBirth: data.dateOfBirth,
+        appointmentFrequency: data.appointmentFrequency,
         contactPhone: data.contactPhone,
         contactEmail: data.contactEmail,
         address: data.address,

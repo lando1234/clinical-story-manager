@@ -39,6 +39,7 @@ function toPatientOutput(patient: Patient): PatientOutput {
     id: patient.id,
     fullName: patient.fullName,
     dateOfBirth: patient.dateOfBirth,
+    appointmentFrequency: patient.appointmentFrequency,
     contactPhone: patient.contactPhone,
     contactEmail: patient.contactEmail,
     address: patient.address,
@@ -206,6 +207,7 @@ export const PatientService = {
         data: {
           fullName: input.fullName.trim(),
           dateOfBirth: input.dateOfBirth,
+          appointmentFrequency: input.appointmentFrequency?.trim() || null,
           contactPhone: input.contactPhone?.trim() || null,
           contactEmail: input.contactEmail?.trim() || null,
           address: input.address?.trim() || null,
@@ -341,6 +343,9 @@ export const PatientService = {
     }
     if (input.dateOfBirth !== undefined) {
       updateData.dateOfBirth = input.dateOfBirth;
+    }
+    if (input.appointmentFrequency !== undefined) {
+      updateData.appointmentFrequency = input.appointmentFrequency?.trim() || null;
     }
     if (input.contactPhone !== undefined) {
       updateData.contactPhone = input.contactPhone?.trim() || null;

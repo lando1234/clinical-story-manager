@@ -81,6 +81,7 @@ export async function startMedication(
       dosageUnit: input.dosageUnit,
       frequency: input.frequency,
       prescriptionIssueDate: input.prescriptionIssueDate,
+      prescriptionRenewalPeriod: input.prescriptionRenewalPeriod ?? null,
       comments: input.comments,
       status: MedicationStatus.Active,
       // endDate, discontinuationReason, predecessorId remain null
@@ -168,6 +169,23 @@ export async function changeMedication(
     );
   }
 
+  if (
+    input.newPrescriptionRenewalPeriod !== undefined &&
+    input.newPrescriptionRenewalPeriod !== null
+  ) {
+    if (
+      !Number.isInteger(input.newPrescriptionRenewalPeriod) ||
+      input.newPrescriptionRenewalPeriod <= 0
+    ) {
+      return err(
+        new DomainError(
+          "MISSING_REQUIRED_FIELDS",
+          "Prescription renewal period must be a positive integer"
+        )
+      );
+    }
+  }
+
   // Calculate the end date for the current medication (day before effective date)
   const endDate = new Date(input.effectiveDate);
   endDate.setDate(endDate.getDate() - 1);
@@ -196,6 +214,10 @@ export async function changeMedication(
         dosageUnit: input.newDosageUnit ?? currentMedication.dosageUnit,
         frequency: input.newFrequency ?? currentMedication.frequency,
         prescriptionIssueDate: input.effectiveDate,
+        prescriptionRenewalPeriod:
+          input.newPrescriptionRenewalPeriod !== undefined
+            ? input.newPrescriptionRenewalPeriod
+            : currentMedication.prescriptionRenewalPeriod,
         comments: currentMedication.comments,
         status: MedicationStatus.Active,
         predecessorId: currentMedication.id,

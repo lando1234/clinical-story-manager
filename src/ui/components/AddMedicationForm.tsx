@@ -15,6 +15,7 @@ interface FormData {
   dosageUnit: string;
   frequency: string;
   prescriptionIssueDate: string;
+  prescriptionRenewalPeriod: string;
   comments: string;
 }
 
@@ -24,6 +25,7 @@ interface FieldErrors {
   dosageUnit?: string;
   frequency?: string;
   prescriptionIssueDate?: string;
+  prescriptionRenewalPeriod?: string;
 }
 
 /**
@@ -47,6 +49,7 @@ export function AddMedicationForm({
     dosageUnit: 'mg',
     frequency: '',
     prescriptionIssueDate: new Date().toISOString().split('T')[0],
+    prescriptionRenewalPeriod: '',
     comments: '',
   });
 
@@ -85,6 +88,13 @@ export function AddMedicationForm({
       }
     }
 
+    if (formData.prescriptionRenewalPeriod) {
+      const renewalNum = parseInt(formData.prescriptionRenewalPeriod, 10);
+      if (isNaN(renewalNum) || renewalNum <= 0) {
+        errors.prescriptionRenewalPeriod = 'Los días de renovación deben ser un entero positivo';
+      }
+    }
+
     // comments is optional - no validation needed
 
     setFieldErrors(errors);
@@ -102,6 +112,10 @@ export function AddMedicationForm({
     setIsSubmitting(true);
 
     try {
+      const renewalPeriod = formData.prescriptionRenewalPeriod
+        ? parseInt(formData.prescriptionRenewalPeriod, 10)
+        : undefined;
+
       const response = await fetch(`/api/patients/${patientId}/medications`, {
         method: 'POST',
         headers: {
@@ -113,6 +127,7 @@ export function AddMedicationForm({
           dosageUnit: formData.dosageUnit.trim(),
           frequency: formData.frequency.trim(),
           prescriptionIssueDate: formData.prescriptionIssueDate,
+          prescriptionRenewalPeriod: renewalPeriod,
           comments: formData.comments.trim() || undefined,
         }),
       });
@@ -133,6 +148,7 @@ export function AddMedicationForm({
         dosageUnit: 'mg',
         frequency: '',
         prescriptionIssueDate: new Date().toISOString().split('T')[0],
+        prescriptionRenewalPeriod: '',
         comments: '',
       });
       setFieldErrors({});
@@ -151,6 +167,15 @@ export function AddMedicationForm({
     if (!isSubmitting) {
       setSubmitError(null);
       setFieldErrors({});
+      setFormData({
+        drugName: '',
+        dosage: '',
+        dosageUnit: 'mg',
+        frequency: '',
+        prescriptionIssueDate: new Date().toISOString().split('T')[0],
+        prescriptionRenewalPeriod: '',
+        comments: '',
+      });
       onClose();
     }
   };
@@ -332,6 +357,44 @@ export function AddMedicationForm({
             {fieldErrors.prescriptionIssueDate && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                 {fieldErrors.prescriptionIssueDate}
+              </p>
+            )}
+          </div>
+
+          {/* Prescription Renewal Period */}
+          <div>
+            <label
+              htmlFor="prescriptionRenewalPeriod"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Días para renovación de receta
+            </label>
+            <input
+              type="number"
+              id="prescriptionRenewalPeriod"
+              value={formData.prescriptionRenewalPeriod}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  prescriptionRenewalPeriod: e.target.value,
+                })
+              }
+              min={1}
+              step={1}
+              placeholder="Ej. 30"
+              className={`mt-1 block w-full rounded-md border ${
+                fieldErrors.prescriptionRenewalPeriod
+                  ? 'border-red-300 dark:border-red-700'
+                  : 'border-gray-300 dark:border-gray-600'
+              } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
+              disabled={isSubmitting}
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Opcional. Ingresa los días de vigencia antes de requerir renovación.
+            </p>
+            {fieldErrors.prescriptionRenewalPeriod && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.prescriptionRenewalPeriod}
               </p>
             )}
           </div>

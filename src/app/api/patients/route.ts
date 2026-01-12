@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     const input: CreatePatientInput = {
       fullName: body.fullName,
       dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined as unknown as Date,
+      appointmentFrequency: body.appointmentFrequency,
       contactPhone: body.contactPhone,
       contactEmail: body.contactEmail,
       address: body.address,

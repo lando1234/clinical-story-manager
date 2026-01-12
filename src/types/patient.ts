@@ -9,6 +9,8 @@ export interface CreatePatientInput {
   fullName: string;
   /** Patient's birth date (required) */
   dateOfBirth: Date;
+  /** Preferred appointment frequency (e.g., Semanal, Mensual) */
+  appointmentFrequency?: string;
   /** Primary phone number */
   contactPhone?: string;
   /** Primary email address */
@@ -45,6 +47,8 @@ export interface UpdatePatientInput {
   fullName?: string;
   /** Patient's birth date */
   dateOfBirth?: Date;
+  /** Preferred appointment frequency (e.g., Semanal, Mensual) */
+  appointmentFrequency?: string | null;
   /** Primary phone number */
   contactPhone?: string | null;
   /** Primary email address */
@@ -69,6 +73,7 @@ export interface PatientOutput {
   id: string;
   fullName: string;
   dateOfBirth: Date;
+  appointmentFrequency: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;

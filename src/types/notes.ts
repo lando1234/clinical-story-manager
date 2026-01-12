@@ -7,6 +7,11 @@ export interface CreateDraftNoteInput {
   clinicalRecordId: string;
   encounterDate: Date;
   encounterType: EncounterType;
+  /**
+   * Serialized structured content (compat layer). When provided, it will be
+   * stored into legacy text fields for persistence.
+   */
+  content?: string;
   subjective?: string;
   objective?: string;
   assessment?: string;
@@ -19,10 +24,115 @@ export interface CreateDraftNoteInput {
 export interface UpdateDraftNoteInput {
   encounterDate?: Date;
   encounterType?: EncounterType;
+  /**
+   * Serialized structured content (compat layer). When provided, it will be
+   * stored into legacy text fields for persistence.
+   */
+  content?: string;
   subjective?: string;
   objective?: string;
   assessment?: string;
   plan?: string;
+}
+
+/**
+ * Structured clinical note content broken down into clear sections.
+ */
+export interface StructuredNoteContent {
+  evaluacionSemiologica: string;
+  datosExtra: string;
+  diagnosticos: string;
+  diagnosticosEstudio: string;
+  planFarmacologico: string;
+  indicaciones: string;
+  extras: string;
+}
+
+const STRUCTURED_LABELS: Record<keyof StructuredNoteContent, string> = {
+  evaluacionSemiologica: "Evaluación semiológica",
+  datosExtra: "Datos extras de la consulta",
+  diagnosticos: "Diagnósticos",
+  diagnosticosEstudio: "Diagnósticos en estudio",
+  planFarmacologico: "Plan farmacológico",
+  indicaciones: "Indicaciones",
+  extras: "Extras",
+};
+
+/**
+ * Returns true if at least one structured section has text.
+ */
+export function hasStructuredContent(content: StructuredNoteContent): boolean {
+  return Object.values(content).some((value) => value?.trim().length > 0);
+}
+
+/**
+ * Serializes structured sections into a human-friendly string with headers.
+ * Only non-empty sections are included.
+ */
+export function serializeStructuredNote(content: StructuredNoteContent): string {
+  const parts = (Object.keys(STRUCTURED_LABELS) as Array<
+    keyof StructuredNoteContent
+  >)
+    .map((key) => {
+      const value = content[key]?.trim();
+      if (!value) return null;
+      return `${STRUCTURED_LABELS[key]}:\n${value}`;
+    })
+    .filter((section): section is string => Boolean(section));
+
+  return parts.join("\n\n");
+}
+
+/**
+ * Builds legacy note fields from structured content to keep backward
+ * compatibility with existing persistence (SOAP-like fields).
+ */
+export function mapStructuredToLegacyFields(
+  content: StructuredNoteContent,
+  options?: { forceFill?: boolean }
+): {
+  serializedContent: string;
+  subjective?: string;
+  objective?: string;
+  assessment?: string;
+  plan?: string;
+} {
+  const serializedContent = serializeStructuredNote(content);
+
+  const subjectiveSections = [
+    content.evaluacionSemiologica,
+    content.datosExtra,
+    content.extras,
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  const assessmentSections = [content.diagnosticos, content.diagnosticosEstudio]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  const planSections = [content.planFarmacologico, content.indicaciones]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  // When forceFill is enabled (e.g., for immediate finalization), ensure
+  // assessment/plan are not empty by falling back to the full serialized text.
+  const ensureValue = (value: string) =>
+    value && value.trim().length > 0
+      ? value
+      : options?.forceFill
+        ? serializedContent
+        : undefined;
+
+  return {
+    serializedContent,
+    subjective: ensureValue(subjectiveSections) ?? undefined,
+    assessment: ensureValue(assessmentSections),
+    plan: ensureValue(planSections),
+  };
 }
 
 /**

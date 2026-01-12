@@ -54,9 +54,13 @@ export async function createDraftNote(
   }
 
   // Draft notes must have at least one piece of clinical content
-  const hasClinicalContent = [input.subjective, input.objective, input.assessment, input.plan].some(
-    (field) => typeof field === "string" && field.trim().length > 0
-  );
+  const hasClinicalContent = [
+    input.content,
+    input.subjective,
+    input.objective,
+    input.assessment,
+    input.plan,
+  ].some((field) => typeof field === "string" && field.trim().length > 0);
 
   if (!hasClinicalContent) {
     return err(
@@ -73,7 +77,7 @@ export async function createDraftNote(
       encounterDate: input.encounterDate,
       encounterType: input.encounterType,
       status: NoteStatus.Draft,
-      subjective: input.subjective,
+      subjective: input.subjective ?? input.content,
       objective: input.objective,
       assessment: input.assessment,
       plan: input.plan,
@@ -129,7 +133,7 @@ export async function updateDraftNote(
     data: {
       encounterDate: input.encounterDate,
       encounterType: input.encounterType,
-      subjective: input.subjective,
+      subjective: input.subjective ?? input.content,
       objective: input.objective,
       assessment: input.assessment,
       plan: input.plan,

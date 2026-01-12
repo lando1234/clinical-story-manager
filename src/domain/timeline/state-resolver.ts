@@ -166,6 +166,7 @@ export async function getCurrentState(
     dosageUnit: med.dosageUnit,
     frequency: med.frequency,
     prescriptionIssueDate: med.prescriptionIssueDate,
+    prescriptionRenewalPeriod: med.prescriptionRenewalPeriod,
     comments: med.comments,
   }));
 
@@ -306,6 +307,7 @@ export async function getHistoricalState(
     dosageUnit: med.dosageUnit,
     frequency: med.frequency,
     prescriptionIssueDate: med.prescriptionIssueDate,
+    prescriptionRenewalPeriod: med.prescriptionRenewalPeriod,
   }));
 
   const historicalHistoryData: HistoricalPsychiatricHistory | null = historicalHistory

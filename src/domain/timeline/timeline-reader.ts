@@ -713,6 +713,7 @@ export async function getEventSource(
       dosageUnit: medication.dosageUnit,
       frequency: medication.frequency,
       prescriptionIssueDate: medication.prescriptionIssueDate,
+      prescriptionRenewalPeriod: medication.prescriptionRenewalPeriod,
       endDate: medication.endDate,
       comments: medication.comments,
       discontinuationReason: medication.discontinuationReason,

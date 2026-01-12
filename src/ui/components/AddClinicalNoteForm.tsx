@@ -2,6 +2,11 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  StructuredNoteContent,
+  hasStructuredContent,
+  mapStructuredToLegacyFields,
+} from '@/types/notes';
 
 interface AddClinicalNoteFormProps {
   patientId: string;
@@ -9,22 +14,16 @@ interface AddClinicalNoteFormProps {
   onClose: () => void;
 }
 
-interface FormData {
+type FormData = StructuredNoteContent & {
   encounterDate: string;
   encounterType: string;
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
   finalizeImmediately: boolean;
-}
+};
 
 interface FieldErrors {
   encounterDate?: string;
   encounterType?: string;
-  subjective?: string;
-  assessment?: string;
-  plan?: string;
+  content?: string;
 }
 
 const ENCOUNTER_TYPES = [
@@ -55,10 +54,13 @@ export function AddClinicalNoteForm({
   const [formData, setFormData] = useState<FormData>({
     encounterDate: new Date().toISOString().split('T')[0],
     encounterType: 'FollowUp',
-    subjective: '',
-    objective: '',
-    assessment: '',
-    plan: '',
+    evaluacionSemiologica: '',
+    datosExtra: '',
+    diagnosticos: '',
+    diagnosticosEstudio: '',
+    planFarmacologico: '',
+    indicaciones: '',
+    extras: '',
     finalizeImmediately: true,
   });
 
@@ -84,17 +86,18 @@ export function AddClinicalNoteForm({
       errors.encounterType = 'El tipo de encuentro es requerido';
     }
 
-    // If finalizing immediately, these fields are required
-    if (formData.finalizeImmediately) {
-      if (!formData.subjective || formData.subjective.trim().length === 0) {
-        errors.subjective = 'El campo subjetivo es requerido para finalizar';
-      }
-      if (!formData.assessment || formData.assessment.trim().length === 0) {
-        errors.assessment = 'El campo de evaluación es requerido para finalizar';
-      }
-      if (!formData.plan || formData.plan.trim().length === 0) {
-        errors.plan = 'El campo de plan es requerido para finalizar';
-      }
+    const structuredContent: StructuredNoteContent = {
+      evaluacionSemiologica: formData.evaluacionSemiologica,
+      datosExtra: formData.datosExtra,
+      diagnosticos: formData.diagnosticos,
+      diagnosticosEstudio: formData.diagnosticosEstudio,
+      planFarmacologico: formData.planFarmacologico,
+      indicaciones: formData.indicaciones,
+      extras: formData.extras,
+    };
+
+    if (!hasStructuredContent(structuredContent)) {
+      errors.content = 'Debes ingresar al menos un campo de la nota';
     }
 
     setFieldErrors(errors);
@@ -112,6 +115,20 @@ export function AddClinicalNoteForm({
     setIsSubmitting(true);
 
     try {
+      const structuredContent: StructuredNoteContent = {
+        evaluacionSemiologica: formData.evaluacionSemiologica,
+        datosExtra: formData.datosExtra,
+        diagnosticos: formData.diagnosticos,
+        diagnosticosEstudio: formData.diagnosticosEstudio,
+        planFarmacologico: formData.planFarmacologico,
+        indicaciones: formData.indicaciones,
+        extras: formData.extras,
+      };
+
+      const legacyFields = mapStructuredToLegacyFields(structuredContent, {
+        forceFill: formData.finalizeImmediately,
+      });
+
       // Step 1: Create draft note
       const createResponse = await fetch(`/api/patients/${patientId}/notes`, {
         method: 'POST',
@@ -121,10 +138,10 @@ export function AddClinicalNoteForm({
         body: JSON.stringify({
           encounterDate: formData.encounterDate,
           encounterType: formData.encounterType,
-          subjective: formData.subjective.trim() || undefined,
-          objective: formData.objective.trim() || undefined,
-          assessment: formData.assessment.trim() || undefined,
-          plan: formData.plan.trim() || undefined,
+          content: legacyFields.serializedContent,
+          subjective: legacyFields.subjective,
+          assessment: legacyFields.assessment,
+          plan: legacyFields.plan,
         }),
       });
 
@@ -163,10 +180,13 @@ export function AddClinicalNoteForm({
       setFormData({
         encounterDate: new Date().toISOString().split('T')[0],
         encounterType: 'FollowUp',
-        subjective: '',
-        objective: '',
-        assessment: '',
-        plan: '',
+        evaluacionSemiologica: '',
+        datosExtra: '',
+        diagnosticos: '',
+        diagnosticosEstudio: '',
+        planFarmacologico: '',
+        indicaciones: '',
+        extras: '',
         finalizeImmediately: true,
       });
       setFieldErrors({});
@@ -284,120 +304,158 @@ export function AddClinicalNoteForm({
             </div>
           </div>
 
-          {/* Subjective */}
-          <div>
-            <label
-              htmlFor="subjective"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Subjetivo
-              {formData.finalizeImmediately && (
-                <span className="text-red-500"> *</span>
-              )}
-            </label>
-            <textarea
-              id="subjective"
-              rows={4}
-              value={formData.subjective}
-              onChange={(e) =>
-                setFormData({ ...formData, subjective: e.target.value })
-              }
-              className={`mt-1 block w-full rounded-md border ${
-                fieldErrors.subjective
-                  ? 'border-red-300 dark:border-red-700'
-                  : 'border-gray-300 dark:border-gray-600'
-              } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
-              disabled={isSubmitting}
-            />
-            {fieldErrors.subjective && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {fieldErrors.subjective}
+          <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              Contenido estructurado
+            </p>
+            {fieldErrors.content && (
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.content}
               </p>
             )}
-          </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="evaluacionSemiologica"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Evaluación semiológica
+                </label>
+                <textarea
+                  id="evaluacionSemiologica"
+                  rows={3}
+                  value={formData.evaluacionSemiologica}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      evaluacionSemiologica: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
 
-          {/* Objective */}
-          <div>
-            <label
-              htmlFor="objective"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Objetivo
-            </label>
-            <textarea
-              id="objective"
-              rows={4}
-              value={formData.objective}
-              onChange={(e) =>
-                setFormData({ ...formData, objective: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              disabled={isSubmitting}
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="datosExtra"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Datos extra de la consulta
+                </label>
+                <textarea
+                  id="datosExtra"
+                  rows={3}
+                  value={formData.datosExtra}
+                  onChange={(e) =>
+                    setFormData({ ...formData, datosExtra: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
 
-          {/* Assessment */}
-          <div>
-            <label
-              htmlFor="assessment"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Evaluación
-              {formData.finalizeImmediately && (
-                <span className="text-red-500"> *</span>
-              )}
-            </label>
-            <textarea
-              id="assessment"
-              rows={4}
-              value={formData.assessment}
-              onChange={(e) =>
-                setFormData({ ...formData, assessment: e.target.value })
-              }
-              className={`mt-1 block w-full rounded-md border ${
-                fieldErrors.assessment
-                  ? 'border-red-300 dark:border-red-700'
-                  : 'border-gray-300 dark:border-gray-600'
-              } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
-              disabled={isSubmitting}
-            />
-            {fieldErrors.assessment && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {fieldErrors.assessment}
-              </p>
-            )}
-          </div>
+              <div>
+                <label
+                  htmlFor="diagnosticos"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Diagnósticos
+                </label>
+                <textarea
+                  id="diagnosticos"
+                  rows={3}
+                  value={formData.diagnosticos}
+                  onChange={(e) =>
+                    setFormData({ ...formData, diagnosticos: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
 
-          {/* Plan */}
-          <div>
-            <label
-              htmlFor="plan"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Plan
-              {formData.finalizeImmediately && (
-                <span className="text-red-500"> *</span>
-              )}
-            </label>
-            <textarea
-              id="plan"
-              rows={4}
-              value={formData.plan}
-              onChange={(e) =>
-                setFormData({ ...formData, plan: e.target.value })
-              }
-              className={`mt-1 block w-full rounded-md border ${
-                fieldErrors.plan
-                  ? 'border-red-300 dark:border-red-700'
-                  : 'border-gray-300 dark:border-gray-600'
-              } bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100`}
-              disabled={isSubmitting}
-            />
-            {fieldErrors.plan && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {fieldErrors.plan}
-              </p>
-            )}
+              <div>
+                <label
+                  htmlFor="diagnosticosEstudio"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Diagnósticos en estudio
+                </label>
+                <textarea
+                  id="diagnosticosEstudio"
+                  rows={3}
+                  value={formData.diagnosticosEstudio}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      diagnosticosEstudio: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="planFarmacologico"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Plan farmacológico
+                </label>
+                <textarea
+                  id="planFarmacologico"
+                  rows={3}
+                  value={formData.planFarmacologico}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      planFarmacologico: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="indicaciones"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Indicaciones
+                </label>
+                <textarea
+                  id="indicaciones"
+                  rows={3}
+                  value={formData.indicaciones}
+                  onChange={(e) =>
+                    setFormData({ ...formData, indicaciones: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label
+                  htmlFor="extras"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Extras
+                </label>
+                <textarea
+                  id="extras"
+                  rows={3}
+                  value={formData.extras}
+                  onChange={(e) =>
+                    setFormData({ ...formData, extras: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Finalize Immediately Option */}

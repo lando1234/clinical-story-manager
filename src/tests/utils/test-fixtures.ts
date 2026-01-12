@@ -411,7 +411,7 @@ export async function createTestAppointment(
       patientId: options.patientId,
       scheduledDate: options.scheduledDate ?? new Date(),
       scheduledTime: options.scheduledTime,
-      appointmentType: options.appointmentType ?? AppointmentType.FollowUp,
+      appointmentType: options.appointmentType ?? AppointmentType.Psicoterapia,
       status: options.status ?? AppointmentStatus.Scheduled,
       notes: options.notes,
     },

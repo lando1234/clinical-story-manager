@@ -10,6 +10,7 @@ export interface StartMedicationInput {
   dosageUnit: string;
   frequency: string;
   prescriptionIssueDate: Date;
+  prescriptionRenewalPeriod?: number | null;
   comments?: string;
 }
 
@@ -22,6 +23,7 @@ export interface ChangeMedicationInput {
   newDosage: number;
   newDosageUnit?: string;
   newFrequency?: string;
+  newPrescriptionRenewalPeriod?: number | null;
   effectiveDate: Date;
   changeReason?: string;
 }
@@ -68,6 +70,17 @@ export function validateStartMedicationInput(
   }
   if (input.prescriptionIssueDate > new Date()) {
     reasons.push("Prescription issue date cannot be in the future");
+  }
+  if (
+    input.prescriptionRenewalPeriod !== undefined &&
+    input.prescriptionRenewalPeriod !== null
+  ) {
+    if (
+      !Number.isInteger(input.prescriptionRenewalPeriod) ||
+      input.prescriptionRenewalPeriod <= 0
+    ) {
+      reasons.push("Prescription renewal period must be a positive integer");
+    }
   }
   // comments is optional per spec - no validation needed
 
