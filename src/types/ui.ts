@@ -31,6 +31,17 @@ export type EncounterType =
   | 'Phone Consultation'
   | 'Other';
 
+export type AppointmentType =
+  | 'Psicoterapia'
+  | 'Orientación Familiar'
+  | 'Llamado Programado'
+  | 'Llamado en Crisis'
+  | 'Sesión Grupal'
+  | 'Taller'
+  | 'Entrevista de Admisión'
+  | 'Evaluación'
+  | 'Llamado al Colegio';
+
 export type PatientStatus = 'Active' | 'Inactive';
 
 export type NoteStatus = 'Draft' | 'Finalized';
@@ -77,6 +88,7 @@ export interface ActiveMedication {
   dosage_unit: string;
   frequency: string;
   prescription_issue_date: string; // Date as ISO string
+  prescription_renewal_period: number | null;
   comments: string | null;
 }
 
@@ -109,7 +121,7 @@ export interface Appointment {
   scheduled_date: string; // Date as ISO string
   scheduled_time: string | null; // Time as HH:MM string
   duration_minutes: number | null;
-  appointment_type: EncounterType;
+  appointment_type: AppointmentType;
   status: AppointmentStatus;
   notes: string | null;
 }

@@ -48,13 +48,15 @@ enum EncounterType {
 }
 
 enum AppointmentType {
-  InitialEvaluation
-  FollowUp
-  CrisisIntervention
-  MedicationReview
-  TherapySession
-  PhoneConsultation
-  Other
+  Psicoterapia
+  OrientacionFamiliar
+  LlamadoProgramado
+  LlamadoEnCrisis
+  SesionGrupal
+  Taller
+  EntrevistaAdmision
+  Evaluacion
+  LlamadoColegio
 }
 
 enum ClinicalEventType {
@@ -92,6 +94,7 @@ model Patient {
   contactPhone                 String?       @map("contact_phone")
   contactEmail                 String?       @map("contact_email")
   address                      String?
+  appointmentFrequency         String?       @map("appointment_frequency")
   emergencyContactName         String?       @map("emergency_contact_name")
   emergencyContactPhone        String?       @map("emergency_contact_phone")
   emergencyContactRelationship String?       @map("emergency_contact_relationship")
@@ -203,6 +206,7 @@ model Medication {
   dosageUnit            String           @map("dosage_unit")
   frequency             String
   prescriptionIssueDate DateTime         @map("prescription_issue_date") @db.Date
+  prescriptionRenewalPeriod Int?         @map("prescription_renewal_period")
   endDate               DateTime?        @map("end_date") @db.Date
   comments              String?          @map("comments")
   discontinuationReason String?          @map("discontinuation_reason")

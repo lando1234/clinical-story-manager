@@ -24,13 +24,15 @@ export type AppointmentStatus =
  * Mirrors Prisma's AppointmentType.
  */
 export const AppointmentType = {
-  InitialEvaluation: "InitialEvaluation",
-  FollowUp: "FollowUp",
-  CrisisIntervention: "CrisisIntervention",
-  MedicationReview: "MedicationReview",
-  TherapySession: "TherapySession",
-  PhoneConsultation: "PhoneConsultation",
-  Other: "Other",
+  Psicoterapia: "Psicoterapia",
+  OrientacionFamiliar: "OrientacionFamiliar",
+  LlamadoProgramado: "LlamadoProgramado",
+  LlamadoEnCrisis: "LlamadoEnCrisis",
+  SesionGrupal: "SesionGrupal",
+  Taller: "Taller",
+  EntrevistaAdmision: "EntrevistaAdmision",
+  Evaluacion: "Evaluacion",
+  LlamadoColegio: "LlamadoColegio",
 } as const;
 
 export type AppointmentType =

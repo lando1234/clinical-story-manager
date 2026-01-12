@@ -21,13 +21,15 @@ import { getClinicalRecordForPatient } from "@/lib/api-helpers";
  */
 function getAppointmentTypeTitle(appointmentType: string): string {
   const mapping: Record<string, string> = {
-    InitialEvaluation: "Turno - Evaluación Inicial",
-    FollowUp: "Turno - Seguimiento",
-    CrisisIntervention: "Turno - Intervención en Crisis",
-    MedicationReview: "Turno - Revisión de Medicación",
-    TherapySession: "Turno - Sesión de Terapia",
-    PhoneConsultation: "Turno - Consulta Telefónica",
-    Other: "Turno",
+    Psicoterapia: "Turno - Psicoterapia",
+    OrientacionFamiliar: "Turno - Orientación Familiar",
+    LlamadoProgramado: "Turno - Llamado Programado",
+    LlamadoEnCrisis: "Turno - Llamado en Crisis",
+    SesionGrupal: "Turno - Sesión Grupal",
+    Taller: "Turno - Taller",
+    EntrevistaAdmision: "Turno - Entrevista de Admisión",
+    Evaluacion: "Turno - Evaluación",
+    LlamadoColegio: "Turno - Llamado al Colegio",
   };
   return mapping[appointmentType] || "Turno";
 }

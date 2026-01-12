@@ -25,13 +25,15 @@ interface FieldErrors {
 }
 
 const APPOINTMENT_TYPES = [
-  { value: 'InitialEvaluation', label: 'Evaluación Inicial' },
-  { value: 'FollowUp', label: 'Seguimiento' },
-  { value: 'CrisisIntervention', label: 'Intervención en Crisis' },
-  { value: 'MedicationReview', label: 'Revisión de Medicación' },
-  { value: 'TherapySession', label: 'Sesión de Terapia' },
-  { value: 'PhoneConsultation', label: 'Consulta Telefónica' },
-  { value: 'Other', label: 'Otro' },
+  { value: 'Psicoterapia', label: 'Psicoterapia' },
+  { value: 'OrientacionFamiliar', label: 'Orientación Familiar' },
+  { value: 'LlamadoProgramado', label: 'Llamado Programado' },
+  { value: 'LlamadoEnCrisis', label: 'Llamado en Crisis' },
+  { value: 'SesionGrupal', label: 'Sesión Grupal' },
+  { value: 'Taller', label: 'Taller' },
+  { value: 'EntrevistaAdmision', label: 'Entrevista de Admisión' },
+  { value: 'Evaluacion', label: 'Evaluación' },
+  { value: 'LlamadoColegio', label: 'Llamado al Colegio' },
 ] as const;
 
 /**
@@ -57,7 +59,7 @@ export function AddAppointmentForm({
     scheduledDate: defaultDate,
     scheduledTime: '',
     durationMinutes: '60',
-    appointmentType: 'FollowUp',
+    appointmentType: 'Psicoterapia',
     notes: '',
   });
 
@@ -115,7 +117,13 @@ export function AddAppointmentForm({
 
     try {
       // Build request body
-      const requestBody: any = {
+      const requestBody: {
+        scheduledDate: string;
+        appointmentType: string;
+        scheduledTime?: string;
+        durationMinutes?: number;
+        notes?: string;
+      } = {
         scheduledDate: formData.scheduledDate,
         appointmentType: formData.appointmentType,
       };
@@ -159,7 +167,7 @@ export function AddAppointmentForm({
         scheduledDate: tomorrow.toISOString().split('T')[0],
         scheduledTime: '',
         durationMinutes: '60',
-        appointmentType: 'FollowUp',
+        appointmentType: 'Psicoterapia',
         notes: '',
       });
       setFieldErrors({});

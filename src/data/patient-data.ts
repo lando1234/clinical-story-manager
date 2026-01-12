@@ -23,6 +23,7 @@ import type {
   Note as UINote,
   EventType as UIEventType,
   EncounterType as UIEncounterType,
+  AppointmentType as UIAppointmentType,
 } from '@/types/ui';
 
 // =============================================================================
@@ -79,19 +80,21 @@ function mapEncounterType(encounterType: EncounterType): UIEncounterType {
 }
 
 /**
- * Maps appointment type to UI EncounterType (appointments use same type names).
+ * Maps appointment type to UI label (Spanish with spaces).
  */
-function mapAppointmentType(appointmentType: string): UIEncounterType {
-  const mapping: Record<string, UIEncounterType> = {
-    InitialEvaluation: 'Initial Evaluation',
-    FollowUp: 'Follow-up',
-    CrisisIntervention: 'Crisis Intervention',
-    MedicationReview: 'Medication Review',
-    TherapySession: 'Therapy Session',
-    PhoneConsultation: 'Phone Consultation',
-    Other: 'Other',
+function mapAppointmentType(appointmentType: string): UIAppointmentType {
+  const mapping: Record<string, UIAppointmentType> = {
+    Psicoterapia: 'Psicoterapia',
+    OrientacionFamiliar: 'Orientación Familiar',
+    LlamadoProgramado: 'Llamado Programado',
+    LlamadoEnCrisis: 'Llamado en Crisis',
+    SesionGrupal: 'Sesión Grupal',
+    Taller: 'Taller',
+    EntrevistaAdmision: 'Entrevista de Admisión',
+    Evaluacion: 'Evaluación',
+    LlamadoColegio: 'Llamado al Colegio',
   };
-  return mapping[appointmentType] ?? 'Other';
+  return mapping[appointmentType] ?? 'Psicoterapia';
 }
 
 /**
@@ -236,6 +239,7 @@ export async function fetchActiveMedicationsForUI(
     dosage_unit: med.dosageUnit,
     frequency: med.frequency,
     prescription_issue_date: toISODateString(med.prescriptionIssueDate),
+    prescription_renewal_period: med.prescriptionRenewalPeriod,
     comments: med.comments,
   }));
 }
